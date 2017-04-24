@@ -103,7 +103,7 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     HFOV = 1/180*pi; %1 degree.
     SR_HFOV = 2*pi*(1-cos(HFOV));
     atmo_background = background_radiant_intensity*SR_HFOV*((1/100).^2) *1E-6/op_filter_bandwidth; 
-    aperture_flux = atmo_background*(pi*aper_radius.^2);
+    %aperture_flux = atmo_background*(pi*aper_radius.^2);
     %W/m^2 (for our bw) =  W/cm^2/sr/um            * sr *   (cm/m).^2 * um/m (spectrum)
     %This should technically change with altitude. Todo; add Earth Subtend
     %for solid angle at our altitude.

@@ -1,4 +1,5 @@
-clear all
+clear 
+%Don't set clear all. wipes debug points
 close all
 %Helpful References:
 %http://www.ti.com/lit/an/sboa060/sboa060.pdf
@@ -74,7 +75,7 @@ background_offset_power = link_package{3};
 
 tia_outputs = tia_block(link_package, bandwidth, w, df);
 
-
+adc_outputs = adc_block(tia_outputs);
 
 %ground_telescope(w); %Handles ground modulation
 %atmo_sigs = link_block(ground_sigs, w);

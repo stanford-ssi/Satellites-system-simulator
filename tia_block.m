@@ -116,7 +116,7 @@ function output_package= tia_block(sigs, bandwidth, w, df);
         optical_noise_tot = noise_optical.*responsivity;
         %TODO; Is this how the noises should be added to achieve a white
         %noise signal of the sum of these two?
-        op_noise = transfer_function .* optical_noise_tot .* responsivity;
+        op_noise = transfer_function(1) .* optical_noise_tot .* responsivity;
         op_signal = transfer_function .* signal_optical .* responsivity;
         op_offset = transfer_function .* offset_optical .* responsivity;
         if(verbose == 1)
@@ -132,22 +132,24 @@ function output_package= tia_block(sigs, bandwidth, w, df);
             xlabel('Hz');
             ylabel('V per rt Hz');
             legend('optical noise','optical signal','optical offset');
-       end
+        end
+    %%Resistor Noise:
+     K = 1.38E-23; %Boltzmann's
+     RES = 4*K*T*R2;%Resistor Noise
+     v_res_noise = sqrt(4*K*T*R2*bandwidth);  
     %%
     %Input Current Noise
     %warning, these are functions of frequency. Must have some w defined.
         c = 1.60217662E-19; %TODO, HOW to actually do shot noise. This is an educated guess.
         SHOT = 2.*c.*I_DC;
-        K = 1.38E-23; %Boltzmann's
-        RES = 4*K*T*R2;%Resistor Noise
-        i_n =  (OPAMP_INOISE.^2 + SHOT.^2 + RES.^2 + PHOTODIODE_DARK_CURRENT.^2).^.5;
+        
+        i_n =  (OPAMP_INOISE.^2 + SHOT.^2 + PHOTODIODE_DARK_CURRENT.^2).^.5;
         i_n_ropamp =  (OPAMP_INOISE.^2 ).^.5;
         
         %Z2 = (R2.^-1 + (1./(w.*C2)).^-1).^-1;    
         %TODO; DO I ALSO MULTIPLY TF? IDK!
         i_noise = i_n .* transfer_function;
-        i_noise_op =  OPAMP_INOISE .* transfer_function;
-        i_noise_res =  RES .*transfer_function;
+        i_noise_op =  OPAMP_INOISE .* transfer_function;  
         i_noise_shot =  SHOT .*transfer_function;
         i_dark = PHOTODIODE_DARK_CURRENT .*transfer_function;
         %
@@ -157,28 +159,40 @@ function output_package= tia_block(sigs, bandwidth, w, df);
             title('Total Current Refered Noise (TIA)');
             xlabel('Hz');
             ylabel('V per rt Hz');
-
-            figure
-            hold on
-            plot(log10(w),log10(i_noise_op));
-            plot(log10(w),log10(i_noise));
-            plot(log10(w),log10(i_noise_res));
-            plot(log10(w),log10(i_noise_shot));
-            plot(log10(w),log10(i_dark));
-            title('Noise Contributions (Through Opamp)');
-            xlabel('10^x Hz');
-            ylabel('V per rt Hz');
-            legend('opamp inoise','Total inoise', 'Resistor Noise', 'Shot Noise','Dark Current');
-        end
+    end
     %%
     %Putting all the TIA stuff together;
     %output_signal = (signal_optical*responsivity) * noise_tf; %Input optical signal through the circuit
     output_signal = op_signal;
     output_offset = op_offset;
-    output_noise = (op_noise.^2 + v_noise.^2 + i_noise.^2) .^0.5;
-    tia_noise = (v_noise.^2 + i_noise.^2) .^0.5;
+    output_noise = (op_noise.^2 + v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
+    %tia_noise = (v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
+    %^THIS IS WRONG. RES NOISE IS ALREADY AN RMS.
+    
+    
+    offset_rms = op_offset(1); %DC amplified voltage.
+    a = (v_noise.^2 + i_noise.^2).^0.5;
+    tia_rms = (get_rms(a,df)^2 + v_res_noise^2) ^0.5;
+    opt_rms = get_rms(op_noise,df);
+    sig_rms = op_signal(1); %Assumes modulation is well within bandwidth of TIA circuit.
     
     if(verbose == 1)
+        figure
+        hold on
+        tia_noise = (v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
+        plot(log10(w),log10(i_noise_op));
+        plot(log10(w),log10(tia_noise),'*');
+        plot(log10(w),log10(v_res_noise.*ones(1,length(w)).*(w<bandwidth)));
+        plot(log10(w),log10(v_noise));
+        plot(log10(w),log10(i_noise_shot));
+        plot(log10(w),log10(i_dark));
+        title('Noise Contributions (Through Opamp)');
+        xlabel('10^x Hz');
+        ylabel('V per rt Hz');
+        legend('opamp inoise','Total noise', 'Resistor Vnoise','Opamp Voltage Noise', 'Shot Noise','Dark Current');
+
+
+        
         figure
         loglog(w,output_noise,'.');
         hold on;
@@ -193,7 +207,21 @@ function output_package= tia_block(sigs, bandwidth, w, df);
         %loglog(OUTPUT);
         'Total SNR up to TIA block:'
         get_snr(output_signal, output_noise, df)
+        
+        o = ones(50,1)';
+        l = linspace(1,10,length(o));
+        figure
+        loglog(l,o.*sig_rms);
+        hold on;
+        loglog(l,o.*opt_rms);
+        loglog(l,o.*offset_rms);
+        loglog(l,o.*tia_rms);
+        title('RMS Values for signals and noises');
+        ylabel('Volts');
+        xlabel('dimensionless (Scalar Values)');
+        legend('Signal RMS', 'Optical Noise RMS', 'Background Offset RMS', 'TIA Noise RMS');
+        
     end
-    output_package = {output_signal, output_noise, w, df};
+    output_package = {sig_rms, opt_rms, offset_rms, tia_rms};
 end
 
