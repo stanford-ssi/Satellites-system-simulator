@@ -25,7 +25,7 @@ voltage_per_division = v_ref*(2.^-enob_adc);
 %V/1bit;
 enob_signal = log2(input_signal/(voltage_per_division));
 
-background_ranges = logspace(-5,2)*input_signal;
+
 %Now, assume we've got some amount of a gain stage
 %that boosts our voltages to as high as we could without railing.
 total_inp_voltage = input_signal + offset_signal +  input_noise;

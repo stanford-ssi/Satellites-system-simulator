@@ -175,7 +175,8 @@ function output_package= tia_block(sigs, bandwidth, w, df);
     tia_rms = (get_rms(a,df)^2 + v_res_noise^2) ^0.5;
     opt_rms = get_rms(op_noise,df);
     sig_rms = op_signal(1); %Assumes modulation is well within bandwidth of TIA circuit.
-    
+    tia_noise = (v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
+        
     if(verbose == 1)
         figure
         hold on
