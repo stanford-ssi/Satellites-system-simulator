@@ -18,7 +18,9 @@ safety_factor = 2;
 
 %ADC definition.
 v_ref = 3.3;
-enob_adc = ltc25000();
+adc_vals = ltc25000();
+enob_adc = adc_vals{1};
+thd_adc = adc_vals{2};
 
 %Simulation from TIA signals. Probably not what you want.
 voltage_per_division = v_ref*(2.^-enob_adc);
@@ -31,7 +33,7 @@ enob_signal = log2(input_signal/(voltage_per_division));
     %signal ontop of a very large offset, we'll lose some
     %dynamic range. How much does it effect us? 
 
-    background_ranges = logspace(-5,2)*input_signal; %Background ranges from 
+    background_ranges = logspace(-5,4)*input_signal; %Background ranges from 
     %1E-5 smaller to 1E2 larger than our input signal.
 
     %Assume we've got some amount of a gain stage
@@ -50,29 +52,57 @@ enob_signal = log2(input_signal/(voltage_per_division));
         ylabel('ENOB of Signal w/ Safety factor');    
         xlabel('Ratio of BG irradiance to signal irradiance');
         legend('Signal ENOB', 'Ideal ADC ENOB');
+     
+        %http://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf
+         %Based on Equations here^
+         SINAD = 6.02.*enob_swept + 1.76;
+         SNR = -10*log10(10.^(-SINAD./10) - 10.^(thd_adc/10) );
+         figure
+         semilogx(background_ranges./input_signal, SNR);
+         hold on;
+         title('SNR of Signal, BG Sensitivity Study');
+         ylabel('SNR of Signal w/ Safety Factor and Harmonic Distortion');
+         xlabel('Ratio of BG irradiance to signal irradiance');
+        
     end
 %%The ENOB for two different domains given our simulated values.    
+%%SNR from ENOB calcs found here; %http://www.analog.com/media/en/training-seminars/tutorials/MT-003.pdf
 %%Fully-Coupled. BG irradiance included:
     total_inp_voltage = input_signal + background_irradiance +  input_noise;
     dynamic_range = total_inp_voltage.*safety_factor; %Safety factor to prevent railing. 
     voltage_per_division = dynamic_range.*(2.^-enob_adc);
     enob_full_coupled = log2( input_signal ./ voltage_per_division );
+    SINAD = 6.02.*enob_full_coupled + 1.76;
+    snr_full_coupled = -10*log10(10.^(-SINAD./10) - 10.^(thd_adc/10) );
 %%AC-Coupled. BG irradiance removed. 
     dynamic_range = input_signal * safety_factor;
     voltage_per_division = dynamic_range*(2.^-enob_adc);
     enob_ac_coupled = log2(input_signal /voltage_per_division);
- if(verbose)
+    SINAD = 6.02.*enob_ac_coupled + 1.76;
+    snr_ac_coupled = -10*log10(10.^(-SINAD./10) - 10.^(thd_adc/10) );
+
+if(verbose)
+    %Plots of AC coupled vs full Coupled signal SNRs. 
      a = linspace(1,10);
      o = ones(length(a),1)';
      figure
      hold on;
-     plot(a,o.*enob_ac_coupled);
-     plot(a,o.*enob_full_coupled);
+     subplot(1,2,1);
+     hold on;
+     plot(a,o.*snr_ac_coupled);
+     plot(a,o.*snr_full_coupled);
      title('AC vs Full Coupling of Expected Signal');
      ylabel('ENOB');
      xlabel('Scalars. Dimensionless');
      legend('AC Coupled', 'Background Coupled'); 
-     axis([1 10 10 18]);
+     axis([1 10 30 100]);
+     subplot(1,2,2);
+     hold on;
+     plot(a,o.*snr_ac_coupled);
+     plot(a,o.*snr_full_coupled);
+     ylabel('ENOB');
+     xlabel('Scalars. Dimensionless');
+     legend('AC Coupled', 'Background Coupled'); 
  end
  
 
