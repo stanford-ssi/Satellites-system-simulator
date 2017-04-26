@@ -71,7 +71,7 @@ enob_signal = log2(input_signal/(voltage_per_division));
          SNR = -10*log10(10.^(-SINAD./10) - 10.^(thd_adc/10) );
          %under 'digital signals': https://en.wikipedia.org/wiki/Signal-to-noise_ratio
          snr_bits = 20*log10(2.^enob_swept);
-         snr_np = mag2db( (input_signal.^2 ./ (voltage_per_division)));
+         snr_np = mag2db( (input_signal ./ (voltage_per_division.^0.5)));
          figure
          semilogx(background_ranges./input_signal, SNR);
          hold on;

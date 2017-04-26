@@ -30,6 +30,12 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     zenith_ang = orbit_package{1}/180*pi; %Converts to radians
     distance = orbit_package{2}; %convert km to meters
     
+    distance = 575000;
+    %distance = 430000;
+    tx_divergance_angle = 1.5E-3; %1.5mRad 
+    
+    
+    
     %Neither of these have been implemented yet.
     %Requires better propogation with gaussian beam and better
     %understanding of optics. Get jitter from Hammati and gaussian from 
@@ -43,7 +49,6 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     %triangular angle of the div_angle is half the value reported.
     %Transmitter from OCTL:
     laser_tx_power = 1.6; %Watts
-    tx_divergance_angle = 1.5E-3; %1.5mRad 
     
     laser_tx_power = 9.25;
     laser_tx_power = 1.6; %Watts
