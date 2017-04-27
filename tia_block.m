@@ -1,5 +1,5 @@
 function output_package= tia_block(sigs, bandwidth, w, df);
-    global verbose
+    global verbose;
     %Helpful References:
     %http://www.ti.com/lit/an/sboa060/sboa060.pdf
     % Walks through the noise calculations of a tia^
@@ -60,6 +60,7 @@ function output_package= tia_block(sigs, bandwidth, w, df);
             title('Transfer function of OpAmp');
             xlabel('10^x Hz');
             ylabel('dB');
+        end
     %Amplifer Voltage Noise
         A = OPAMP_OPENLOOPGAIN; % Open loop gain
         j = (-1)^.5;
@@ -86,11 +87,11 @@ function output_package= tia_block(sigs, bandwidth, w, df);
     if(verbose == 1)
         figure
         hold on
-        plot(log10(w),mag2db(AB));
-        plot(log10(w),mag2db(inv_B));
+        plot(log10(w),mag2db(abs(AB)));
+        plot(log10(w),mag2db(abs(inv_B)));
         plot(log10(w),mag2db(noise_tf));
         plot(log10(w),mag2db(A));
-        plot(log10(w),mag2db(B));
+        plot(log10(w),mag2db(abs(B)));
         plot(log10(w),mag2db(en*1E9));
         plot(log10(w),mag2db(en.*noise_tf.*1E9));
         plot(log10(w),mag2db(transfer_function));
@@ -159,7 +160,7 @@ function output_package= tia_block(sigs, bandwidth, w, df);
             title('Total Current Refered Noise (TIA)');
             xlabel('Hz');
             ylabel('V per rt Hz');
-    end
+        end
     %%
     %Putting all the TIA stuff together;
     %output_signal = (signal_optical*responsivity) * noise_tf; %Input optical signal through the circuit

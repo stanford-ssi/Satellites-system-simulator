@@ -16,8 +16,7 @@ albedo_irradiance = 0;
 optical_noise = 1E-12; %Laser noise. Atmo-noise. Anything the link budget says we've got.
     %Todo; Fix. Also totally made up
 global verbose
-verbose = 1;
-
+verbose = 0;
 
 
 

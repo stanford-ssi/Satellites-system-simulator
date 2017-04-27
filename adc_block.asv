@@ -127,6 +127,15 @@ if(verbose)
      legend('AC Coupled', 'Background Coupled'); 
  end
  
+
+if(verbose)
+    'TIA signal enob'
+    enob_signal
+    'Offset Signal Enob'
+    enob_high_dynamic_range
+    'AC Coupled Signal Enob'
+    enob_ac_coupled
+end
 total_inp_voltage = input_signal + background_irradiance + input_noise;
     signal_dr = total_inp_voltage.*safety_factor; %Safety factor to prevent railing. 
     pga_gain = v_ref ./ signal_dr;
@@ -139,19 +148,9 @@ total_inp_voltage = input_signal + background_irradiance + input_noise;
 output_signal = input_signal*pga_gain;
 output_noise =  ((input_noise*pga_gain).^2 + (sim_quant_noise).^2).^0.5;
 
-if(verbose)
-   'PGA Gain:'
-   pga_gain
-   'ENOB Signal:'
-   enob_signal
-   'SNR to this point:'
-   full_snr = snr(output_signal, output_noise);
-   full_snr
-   'Background Irradiance Ratio:'
-   simmed_ratio
-end
 
-adc_outputs = {output_signal, output_noise, pga_gain, enob_signal};
+    
 
+%adc_outputs = 1; %{signal_power, noise_power, enob};
 
 end
