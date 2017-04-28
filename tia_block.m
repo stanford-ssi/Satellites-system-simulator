@@ -14,13 +14,8 @@ function output_package= tia_block(sigs, bandwidth, w, df);
     %% System Parameters:
     opspecs = opa657(w);
     photspecs = s5981();
-    
-    if( Rf == -1)
-        Rf = 1E3; %1k CHANGE VALUE HERE
-    end
-    if( Cf == -1)
-        Cf = 1E-12; %1pF CHANGE VALUE HERE
-    end
+    Rf = 1E3; %1k CHANGE VALUE HERE
+    Cf = 1E-12; %1pF CHANGE VALUE HERE
     
     T = 273; %Kelvin
     

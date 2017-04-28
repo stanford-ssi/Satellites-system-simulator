@@ -18,6 +18,12 @@ optical_noise = 1E-12; %Laser noise. Atmo-noise. Anything the link budget says w
 global verbose
 verbose = 0;
 
+global best_case
+best_case = 0;
+%0 == worst case, default, conservative.
+%1 == typical behavior
+%2 == Optimistic. 
+
 
 
 F_high = 10E6;
