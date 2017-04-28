@@ -1,10 +1,14 @@
 function output_package= tia_block(sigs, bandwidth, w, df);
+    %Inputs: Watts delivered to an individual diode.
+    %This system operates in the frequency domain, so don't
+    %input a time varying signal into the sigs spot.
+    
     global verbose;
     %Helpful References:
     %http://www.ti.com/lit/an/sboa060/sboa060.pdf
     % Walks through the noise calculations of a tia^
 
-    signal_optical = sigs{1};
+    signal_optical = sigs{1}; %In Watts delivered to an individual diode. 
     noise_optical = sigs{2};
     offset_optical = sigs{3}; %From Earth Albedo. Treated as a white noise source of this amplitude.
     

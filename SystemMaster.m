@@ -24,7 +24,7 @@ best_case = 0;
 %1 == typical behavior
 %2 == Optimistic. 
 
-
+quad_block(1);
 
 F_high = 10E6;
 F_low = 2;
