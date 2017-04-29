@@ -103,16 +103,18 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     %flux by wavelength (um), with an extra area term (cm^2) in there. 
      %in LEO, the Earth subtends a solid angle of ~2Pi (D'Amico's experiment paper).
      %Therefore;
-    aperture_radius = 2.5; %cm b/c Bl is in cm
-    filterBW = 10E-9*1E6;%um; converts nm to um. Industry standard optical filter;
+    aperture_radius = 0.025;
+    filterBW = 11.2E-9; %m. From Opals. "LINK DESIGN AND VALIDATION" pg 6;
     HFOV = 1/180*pi; %1 degree.
     SR_HFOV = 2*pi*(1-cos(HFOV));
     Bl = 0.013;% W/cm^2/sr/um Units of radiant intensity. Which is angular
     Ar = pi * (aperture_radius).^2;
     Omr = SR_HFOV;    
+    
     Lr = 1;
     P_bg = Bl * Ar * Omr * filterBW * Lr
-    atmo_background = P_bg/ Ar; %Intensity. W/m^2;
+    
+    atmo_background = Bl*SR_HFOV*((1/100).^2) *1E-6/filterBW; 
     %aperture_flux = atmo_background*(pi*aper_radius.^2);
     %W/m^2 (for our bw) =  W/cm^2/sr/um            * sr *   (cm/m).^2 * um/m (spectrum)
     %This should technically change with altitude. Todo; add Earth Subtend

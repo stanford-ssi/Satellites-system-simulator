@@ -370,7 +370,6 @@ function quad_outputs = quad_block(thetas, sig_power, spot_size, bg_power, noise
     op_max = spot_pos_x(i_np);
     op_min = spot_pos_x(i_nn);
     dx = (op_max-op_min)*quad_width*2; %b/c normalized to -1,0,1 of quad width;
- 
     var_theta_II = asin(dx/fc);
     figure
     hold on;
