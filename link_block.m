@@ -35,7 +35,7 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     
     distance = 575000;
     %distance = 430000;
-    tx_divergance_angle = 1.5E-3; %1.5mRad 
+    tx_divergance_angle = 1.1E-3; %1.5mRad 
     
     
     
