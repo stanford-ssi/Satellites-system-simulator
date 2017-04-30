@@ -1,6 +1,6 @@
 %%SSI Link Budget.
-% Jake Hillard
 % Michael Taylor
+% Jake Hillard
  
 function output_package= link_block(sigs, orbit_package, pointing_package, optics)
     %Simulates effect of first half of link. Includes laser transmitter, to
@@ -18,8 +18,8 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     %Validation During Operations from the ISS" paper.
     
     global verbose
-    global best_case
-    time = sigs{1}; %seconds
+    global scenario
+    time = sigs{1}; %seconbestds
     signal_tx = sigs{2}; %unitless amplitude.
     noise_tx = sigs{3}; %unitless amplitude.
     %^These are currently not implemented. Do something with them later. 
@@ -48,16 +48,7 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
  
     %transmitted signal should be normalized to 0-1 range.
     %% System Parameters:
-    %Warning: Divergance angle taken as full width of beam. So the
-    %triangular angle of the div_angle is half the value reported.
-    %Transmitter from OCTL:
-    laser_tx_power = 1.6; %Watts
-    
-    laser_tx_power = 9.25;
-    laser_tx_power = 1.6; %Watts
-    laser_tx_power = 9.25 *.86; %*db2mag(-4.4);
-    %Geometeric Decay Of Laser
-   
+
 
     % Parameters
     T = 300;
@@ -66,9 +57,16 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
 
     % Background upwelling radiance
     B_lambda_976 = 0.013; % worst case earth reflection
-    orbit_dist_min = 575e3; % distance straight overhead 0deg zenith ~600km
-    orbit_dist_max = 1000e3; % max distance at 65deg zenith ~1000km
-
+    orbit_dist = 575e3; % distance straight overhead 0deg zenith ~600km
+    if(scenario == 2)
+        orbit_dist = 575e3; % distance straight overhead 0deg zenith ~600km
+        zenith_ang = 0
+    end
+    if(scenario == 0)
+        orbit_dist = 1000e3; % max distance at 65deg zenith ~1000km
+        zenith_ang = 65/180*pi; 
+    end
+        
     % Beacon Transmit Characteristics
     lambda_tx = 976e-9; % 976nm beacon from JPL
     div_tx_e2 = tx_divergance_angle; % 1.1mrad FW1/e^2 beam div.
@@ -95,18 +93,17 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     I_background = P_background/A_rx_eff;
 
     % Beacon Intensity at aperture
-    r_spot = (div_tx/2)*orbit_dist_min;
+    r_spot = (div_tx/2)*orbit_dist;
     A_spot = pi*r_spot.^2;
     I_spot = 2*0.86*Ptx_eff/A_spot; % x2 for gaussian peak vs avg scaling
 
-    Latmo = 10^(-3/10); % 3dB atmospheric loss
     Lpoint = 10^(-3/10); % 3dB pointing / jitter loss
 
     Prx_ap = I_spot*A_rx_eff; % Power available at receiver aperture
-    Prx = Prx_ap*Lrx*Latmo*Lpoint % Power collected by receiver aperture (incl losses)
+    Prx = Prx_ap*Lrx*Lpoint % Power collected by receiver aperture (incl losses)
 
     Prx_bg = I_background*A_rx_eff; % Background power at receiver aperture
-    Pbg = Prx_bg*Lrx*Latmo*Lpoint % BG Power collected by receiver aperture (incl losses)
+    Pbg = Prx_bg*Lrx*Lpoint % BG Power collected by receiver aperture (incl losses)
 
 
 
@@ -119,21 +116,22 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     air_mass = 1./( cos(zenith_ang) + 0.50572.*(6.07995 + 90-zenith_ang).^-1.6364);
     %^Uses Kasten and Young Model to calculate air_mass. See Opals Paper
     %eq(1). section 2.1
-    attenuation = rural_23km_cloudy_model(air_mass);
-    %Rural_20km fit Opal's mission the best. 
-    atmo_variance = 0.3; %Taken from Opals paper
-    if(best_case)
+    if(scenario == 0)
+        attenuation = rural_23km_cloudy_model(air_mass);
+        %Rural_20km fit Opal's mission the best. 
+        atmo_variance = 0.3; %Taken from Opals paper
+    end
+    if(scenario == 2)
         attenuation = desert_ext_model(air_mass);
         atmo_variance = 1E-2;    
         %Best case, it's 1E-2
         %worst case, it's 0.3 of the range.
     end
-    atmo_signal = geometeric_signal.*db2mag(attenuation); %signal after
+    atmo_signal = Prx.*db2mag(attenuation); %signal after atmosphere
     %atmospheric atetenuation.
     %Based on here: https://en.wikipedia.org/wiki/White_noise
     %Power_i for all spectrum i  = variance;
-    level = rms(atmo_signal); %This can't be right. Purely because the other one was too low of answers.
-    atmo_noise = level*atmo_variance; %This is noise power. W/rt(Hz)
+    atmo_noise = atmo_signal*atmo_variance; %This is noise power. W/rt(Hz)
     %Todo; this one is beyond me. 
 %     variance = level*atmo_variance; %b/c the number from OPALS was normalized.
 %     atmo_noise = variance.^.5*randn(length(atmo_signal),1);    
@@ -145,32 +143,27 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
     %flux by wavelength (um), with an extra area term (cm^2) in there. 
      %in LEO, the Earth subtends a solid angle of ~2Pi (D'Amico's experiment paper).
      %Therefore;
-    aperture_radius = 2.5; %cm b/c Bl is in cm
-    filterBW = 10E-9*1E6;%um; converts nm to um. Industry standard optical filter;
-    HFOV = 1/180*pi; %1 degree.
-    SR_HFOV = 2*pi*(1-cos(HFOV));
-    Bl = 0.013;% W/cm^2/sr/um Units of radiant intensity. Which is angular
-    Ar = pi * (aperture_radius).^2;
-    Omr = SR_HFOV;    
-    Lr = 1;
-    P_bg = Bl * Ar * Omr * filterBW * Lr
-    atmo_background = P_bg/ Ar; %Intensity. W/m^2;
+%     aperture_radius = 2.5; %cm b/c Bl is in cm
+%     filterBW = 10E-9*1E6;%um; converts nm to um. Industry standard optical filter;
+%     HFOV = 1/180*pi; %1 degree.
+%     SR_HFOV = 2*pi*(1-cos(HFOV));
+%     Bl = 0.013;% W/cm^2/sr/um Units of radiant intensity. Which is angular
+%     Ar = pi * (aperture_radius).^2;
+%     Omr = SR_HFOV;    
+%     Lr = 1;
+%     P_bg = Bl * Ar * Omr * filterBW * Lr
+%     atmo_background = P_bg/ Ar; %Intensity. W/m^2;
     %aperture_flux = atmo_background*(pi*aper_radius.^2);
     %W/m^2 (for our bw) =  W/cm^2/sr/um            * sr *   (cm/m).^2 * um/m (spectrum)
     %This should technically change with altitude. Todo; add Earth Subtend
     %for solid angle at our altitude.
-             
-    %%Pointing
-    %
-    pointed_signal = atmo_signal; %Perfect pointing.
-    %TODO: Not implemented yet
-    %Todo: Add pointing noise.
+
     
     %%
     %Putting it all together
-    total_signal = pointed_signal;
-    total_noise = atmo_noise;% + atmo_background; Not including background, treating that as a DC offset. 
-    total_bg = atmo_background; 
+    total_signal = atmo_signal
+    total_noise = atmo_noise;
+    total_bg = Pbg; 
     
     
     if(verbose)
@@ -178,10 +171,10 @@ function output_package= link_block(sigs, orbit_package, pointing_package, optic
         hold on;
         t = linspace(1,100);
         o = ones(length(t),1)';
-        plot(t, mag2db(o.*rms(geometeric_signal)));
-        plot(t, mag2db(o.*rms(atmo_signal)));
-        plot(t, mag2db(o.*(rms(atmo_noise)))); %+atmo_background.^2).^0.5));
-        plot(t, mag2db(o.*rms(atmo_background)));
+        plot(t, mag2db(o.*Prx));
+        plot(t, mag2db(o.*atmo_signal));
+        plot(t, mag2db(o.*atmo_noise)); %+atmo_background.^2).^0.5));
+        plot(t, mag2db(o.*Pbg));
         
         title('Atmospheric Effects');
         legend('Signal After Propogation Loss',...
