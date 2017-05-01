@@ -2,7 +2,7 @@
 % Michael Taylor
 % Jake Hillard
  
-function output_package= link_block()
+function output_package= link_block(sigs, orbit_package, pointing_package, optics)
     %Simulates effect of first half of link. Includes laser transmitter, to
     %pointing, to atmospheric effects. Outputs a
     %rms power levels attenuated signal for irradiance W/m^2 at aperture, noise signal,

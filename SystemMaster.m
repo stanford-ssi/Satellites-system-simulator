@@ -44,8 +44,6 @@ a = logspace(f_log_l, f_log_h, 1000);
 w = a;
 bandwidth = F_high-F_low;
 
-ground_sigs = {time, signal_tx, noise_tx, signal_power...
-    noise_power};
 
 
 zenith_ang = 0; %Degrees
@@ -56,7 +54,7 @@ pointing_err = 0;
 jitter = 0;
 pointing_package = {pointing_err, jitter};
 
-link_package = link_block(ground_sigs, orbit_package,  pointing_package, optics_package); 
+link_package = link_block(); 
 tia_outputs = tia_block(link_package, bandwidth, w, df);
 adc_outputs = adc_block(tia_outputs);
 final_signal = adc_outputs{1};
