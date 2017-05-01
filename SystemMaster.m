@@ -6,15 +6,7 @@ close all
 % Walks through the noise calculations of a tia^
 
 %% System Parameters:
-recieved_optical_signal = 22E-6;%Opals prediction.
-recieved_optical_signal = 1E-6;%Opal's prediction w/ airmass=10;
 
-albedo_irradiance = 1E-6; %Noise levels caused by Earth's irradiance and background light.
-albedo_irradiance = 0;
-
-    %Todo; Fix. Totally made up number;
-optical_noise = 1E-12; %Laser noise. Atmo-noise. Anything the link budget says we've got.
-    %Todo; Fix. Also totally made up
 global verbose
 verbose = 1;
 
@@ -24,7 +16,6 @@ scenario = 0;
 %1 == typical behavior
 %2 == Optimistic. 
 
-quad_block(1);
 
 F_high = 10E6;
 F_low = 2;
@@ -53,16 +44,9 @@ a = logspace(f_log_l, f_log_h, 1000);
 w = a;
 bandwidth = F_high-F_low;
 
-time = linspace(1,1000);
-signal_tx = sin(time);
-noise_tx = 0;
-signal_power = rms(signal_tx);
-noise_power = rms(noise_tx);
 ground_sigs = {time, signal_tx, noise_tx, signal_power...
     noise_power};
 
-notch_bw = 11E-9;%11nm. From Opals paper on their optical filter.
-optics_package = {notch_bw};
 
 zenith_ang = 0; %Degrees
 distance = 430000; %Meters
@@ -73,14 +57,13 @@ jitter = 0;
 pointing_package = {pointing_err, jitter};
 
 link_package = link_block(ground_sigs, orbit_package,  pointing_package, optics_package); 
-beacon_signal_power = link_package{1}; %All in W/m^2
-beacon_noise_power = link_package{2};
-background_offset_power = link_package{3}; 
-
-
 tia_outputs = tia_block(link_package, bandwidth, w, df);
-verbose = 1;
 adc_outputs = adc_block(tia_outputs);
+final_signal = adc_outputs{1};
+final_noise = adc_outputs{2};
+[angle_uncertainty] = quad_block(final_signal, final_noise)
+
+
 
 %ground_telescope(w); %Handles ground modulation
 %atmo_sigs = link_block(ground_sigs, w);

@@ -1,4 +1,4 @@
-function quad_outputs = quad_block(thetas, sig_power, spot_size, bg_power, noise_power)
+function angle_uncertainty = quad_block(sig_power, noise_power)
     %%Full simulation of power hitting a quad cell
     %including gaps from pixels. Produces estimate
     %X and Y of position normalized to 1.
@@ -10,15 +10,14 @@ function quad_outputs = quad_block(thetas, sig_power, spot_size, bg_power, noise
     w = 0.001;% beam_waist. exp(-2) of power.
     w = 100E-6;
     fc = 0.015 %focal distance assuming simple telescope (it's not)
-    power = 1E-5; %Total integrated gaussian beam power . 
+    power = sig_power; %Total integrated gaussian beam power . 
     %Power for beam waist to Peak Intensity.
     %https://en.wikipedia.org/wiki/Gaussian_beam
-    I_bg = 0;%Background intensity. However you scale that. 
     
     %used in section 2. Take signal and noise and produce position
     %estimate. Produces uncertainty bounds as well. 
-    signal = 0.01596; %Best guess estimates of signal and noise rms values from TIA block.
-    noise = 8E-5;
+    signal = sig_power; %Best guess estimates of signal and noise rms values from TIA block.
+    noise = noise_power;
    
     pixel_gap = 30E-6; %30um;
     quad_width = 0.01; %10mm 
@@ -586,7 +585,7 @@ function quad_outputs = quad_block(thetas, sig_power, spot_size, bg_power, noise
     %%
     %Section 7:
     %Given the sum output of a quad and the SNR, tell me the position and dx cloud.
-    SNR = 50;
+    SNR = mag2db(sig_power/ noise_power);
     quad_output = 0; %-1,0,1;
     p = (quad_output+1)/2;
     p_np = p*(1+4/db2mag(SNR));
@@ -716,6 +715,49 @@ function quad_outputs = quad_block(thetas, sig_power, spot_size, bg_power, noise
         ylabel('Output of Summations');
         legend('Operating Curve','Ideal Point','Minimum Possible Point','Maximum Possible Point');
     end
+    angle_uncertainty = var_theta_II;
+    
+    
+    %%
+    %Converts SNR into an angle
+    SNR = logspace(-5,10,1000);
+    %SNR = get_snr(tia_sig, tia_noise, df);
+    %mag2db(SNR) %Sanity check component. from Theory of tracking accuracy of
+    %laser systems. eq 62
+    spot_size = 0.001; %.2mm
+    var_x = SNR.^-1.*(1-8./SNR)./(1+8./SNR).^2;
+    dx = spot_size.^2*var_x %denormalized variance. eq 3b
+    fc = 0.015 %focal distance assuming simple telescope (it's not)
+    var_theta_II = asin(dx/fc);
+
+    display =1;
+    if(display ==1)
+        figure
+        hold on;
+        o = ones(length(SNR),1)';
+        target_angle = 1E-7; %0.1uRad;
+        plot(mag2db(SNR),log10(var_theta_II));
+        plot(mag2db(SNR),log10(target_angle*o));
+        title('SNR of Quad VS. Angular Variance');
+        ylabel('Variance, Rad');
+        xlabel('SNR, linear');
+        legend('Var vs SNR','Target Variance');
+
+    end
+
+    if(verbose ==1)
+        'Angle Variance: '
+        var_theta_II
+    end
+        target_theta = 1E-6;
+    tg = ones(1,length(SNR))*target_theta;
+    figure
+    semilogy(mag2db(SNR), var_theta_II);
+    title('SNR vs Angular Determination');
+    xlabel('SNR (dB)');
+    ylabel('Radians');
+
+    
 end
     
     
