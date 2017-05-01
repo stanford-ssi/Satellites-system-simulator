@@ -39,8 +39,8 @@ function [x,y, A, B, C, D] = integrate_quad(spot_x,spot_y, waist, beam_power, qu
     end
     q_sum = sum(sum(quad));
     
-    x = ((quad(1,1)+quad(2,1)) - (quad(1,2)+quad(2,2))) / q_sum;
-    y = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
+    y = ((quad(1,1)+quad(2,1)) - (quad(1,2)+quad(2,2))) / q_sum;
+    x = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
     A= quad(1,1);
     B= quad(2,1);
     C= quad(1,2);

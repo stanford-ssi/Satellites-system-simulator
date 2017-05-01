@@ -255,8 +255,6 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     %%
     %Section 5:
     %Create curve that varies position and records power collected. 
-    low_x = -0.04;
-    high_x = .04;
     low_x = -w/quad_width*4; %Auto scaling to capture most detail.
     high_x = w/quad_width*4;
     
@@ -267,49 +265,14 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     x_hat = zeros(num_locations+1,1)';
     
     %Calculate inverse for max point.     
-    Io = power*2/(pi*w^2) %Peak intensity for gaussian beam.
     for p = 1:length(spot_pos_x)
                 spot_x = spot_pos_x(p); %01;%Ranges from -1 to 1.
                 spot_y = 0;
-                n = simulation_depth;
-                quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                for i = 1:2
-                    for j =1:2
-                        if(i ==2)
-                            low_x = -1*quad_width/2;
-                            high_x = -pixel_gap/2;
-                            del = abs(low_x-high_x);
-                        end
-                        if(i ==1)
-                            low_x = pixel_gap/2; 
-                            high_x = 1*quad_width/2;
-                            del = abs(low_x-high_x);
-                        end
-                        if(j ==2)
-                            low_y = -1*quad_width/2;
-                            high_y = -pixel_gap/2;
-                        end
-                        if(j ==1)
-                            low_y = pixel_gap/2; 
-                            high_y = 1*quad_width/2;
-                        end
-                        [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                        x_relative = x-spot_x*(0.5*quad_width);
-                        y_relative = y-spot_y*(0.5*quad_width); 
-                        I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                        %^From eq1. "Detection sensitivity of the optical beam deflection
-                        %method characterized with the optical spot size on the detector"
-                        I = I_sig;
-                        %I = I_sig + I_bg;
-                        quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                    end
-                end
-                q_sum = sum(sum(quad));
-                X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                x_hat_pre(p) = X_hat;     
+                [x,y] = integrate_quad(spot_x,spot_y,...
+                w,beam_power,quad_width,...
+                pixel_gap, simulation_depth);
+                x_hat_pre(p) = x;     
     end
-        
         if(verbose)
         figure
         plot(spot_pos_x, x_hat_pre);
@@ -319,258 +282,41 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     end    
     %%
     %Section 6: Produce plot of uncertainty and SNR.
-    compute_again = 1;
+    compute_again = 0;
     if(compute_again)
-        simulation_depth = 15;
-        num_points = 50
-        num_locations = 15;
+        simulation_depth = 70;
+        num_points = 50;
+        num_locations = 1000;
         snratio = linspace(3, 100,num_points);
-        quad_output = 0; %-1,0,1; Thinks it's centered.
         dx = ones(num_points,1);
         for index = 1:num_points
                 SNR = snratio(index);
-                p = (quad_output+1)/2;
-                p_np = p*(1+4/db2mag(SNR));
-                p_nn = p*(1-4/db2mag(SNR));
-                q_max = (p*2-1);
-                q_min = (p_nn*2-1); 
-
-                %Find initial operating points.   
-                [c , i_op] = min(abs(x_hat_pre - (p*2-1)));
-                [c , i_np] = min(abs(x_hat_pre - (p_np*2-1)));
-                [c , i_nn] = min(abs(x_hat_pre - (p_nn*2-1)));
-                op_point = spot_pos_x(i_op);
-                op_max = spot_pos_x(i_np);
-                op_min = spot_pos_x(i_nn);
-                dx_prezoom = (op_max-op_min)*quad_width*2; %b/c normalized to -1,0,1 of quad width;
-
-                %Zoom way in on operating points and find proper values for inversion.
-                %======================================================================
-                     Io = power*2/(pi*w^2); %Peak intensity for gaussian beam.
-                     max_pos_x = linspace(spot_pos_x(max([i_np-1,1])), spot_pos_x(min([i_np+1,length(spot_pos_x)])), num_locations);
-                     x_hat_max = ones(length(num_locations),1)';
-                     for p = 1:length(max_pos_x)
-                                    spot_x = max_pos_x(p); %01;%Ranges from -1 to 1.
-                                    spot_y = 0;
-                                    n = simulation_depth;
-                                    quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                                    for i = 1:2
-                                        for j =1:2
-                                            if(i ==2)
-                                                low_x = -1*quad_width/2;
-                                                high_x = -pixel_gap/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(i ==1)
-                                                low_x = pixel_gap/2; 
-                                                high_x = 1*quad_width/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(j ==2)
-                                                low_y = -1*quad_width/2;
-                                                high_y = -pixel_gap/2;
-                                            end
-                                            if(j ==1)
-                                                low_y = pixel_gap/2; 
-                                                high_y = 1*quad_width/2;
-                                            end
-                                            [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                                            x_relative = x-spot_x*(0.5*quad_width);
-                                            y_relative = y-spot_y*(0.5*quad_width); 
-                                            I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                                            %^From eq1. "Detection sensitivity of the optical beam deflection
-                                            %method characterized with the optical spot size on the detector"
-                                            I = I_sig;
-                                            %I = I_sig + I_bg;
-                                            quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                                        end
-                                    end
-                                    q_sum = sum(sum(quad));
-                                    X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                                    x_hat_max(p) = X_hat;     
-                     end
-                     min_pos_x = linspace(spot_pos_x(max([i_nn-1,1])), spot_pos_x(min([i_nn+1,length(spot_pos_x)])), num_locations);                 
-                     x_hat_min = ones(length(num_locations),1)';
-                     for p = 1:length(max_pos_x)
-                                    spot_x = min_pos_x(p); %01;%Ranges from -1 to 1.
-                                    spot_y = 0;
-                                    n = simulation_depth;
-                                    quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                                    for i = 1:2
-                                        for j =1:2
-                                            if(i ==2)
-                                                low_x = -1*quad_width/2;
-                                                high_x = -pixel_gap/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(i ==1)
-                                                low_x = pixel_gap/2; 
-                                                high_x = 1*quad_width/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(j ==2)
-                                                low_y = -1*quad_width/2;
-                                                high_y = -pixel_gap/2;
-                                            end
-                                            if(j ==1)
-                                                low_y = pixel_gap/2; 
-                                                high_y = 1*quad_width/2;
-                                            end
-                                            [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                                            x_relative = x-spot_x*(0.5*quad_width);
-                                            y_relative = y-spot_y*(0.5*quad_width); 
-                                            I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                                            %^From eq1. "Detection sensitivity of the optical beam deflection
-                                            %method characterized with the optical spot size on the detector"
-                                            I = I_sig;
-                                            %I = I_sig + I_bg;
-                                            quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                                        end
-                                    end
-                                    q_sum = sum(sum(quad));
-                                    X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                                    x_hat_min(p) = X_hat;     
-                     end
-                %======================================================================
-                [c , i_np] = min(abs(x_hat_max - (p_np*2-1)));
-                [c , i_nn] = min(abs(x_hat_min - (p_nn*2-1)));
-                op_max = max_pos_x(i_np);
-                op_min = min_pos_x(i_nn);
-                dx(index) = (op_max-op_min)*quad_width*2; %b/c normalized to -1,0,1 of quad width;
+                dx(index) = quad_snr_to_uncertainty(SNR, spot_x,...
+                w, beam_power, quad_width, pixel_gap, simulation_depth, num_points);
                 index
+                num_points
         end
-        
-        num_points = 50
         snratio = linspace(3, 100,num_points);
-        quad_output = 0; %-1,0,1; Thinks it's centered.
         dx_no_gap = ones(num_points,1);
         for index = 1:num_points
                 SNR = snratio(index);
-                p = (quad_output+1)/2;
-                p_np = p*(1+4/db2mag(SNR));
-                p_nn = p*(1-4/db2mag(SNR));
-                q_max = (p*2-1);
-                q_min = (p_nn*2-1); 
-
-                %Find initial operating points.   
-                [c , i_op] = min(abs(x_hat_pre - (p*2-1)));
-                [c , i_np] = min(abs(x_hat_pre - (p_np*2-1)));
-                [c , i_nn] = min(abs(x_hat_pre - (p_nn*2-1)));
-                op_point = spot_pos_x(i_op);
-                op_max = spot_pos_x(i_np);
-                op_min = spot_pos_x(i_nn);
-                dx_prezoom = (op_max-op_min)*quad_width*2; %b/c normalized to -1,0,1 of quad width;
-
-                %Zoom way in on operating points and find proper values for inversion.
-                %======================================================================
-                     Io = power*2/(pi*w^2); %Peak intensity for gaussian beam.
-                     max_pos_x = linspace(spot_pos_x(max([i_np-1,1])), spot_pos_x(min([i_np+1,length(spot_pos_x)])), num_locations);
-                     x_hat_max = ones(length(num_locations),1)';
-                     for p = 1:length(max_pos_x)
-                                    spot_x = max_pos_x(p); %01;%Ranges from -1 to 1.
-                                    spot_y = 0;
-                                    n = simulation_depth;
-                                    quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                                    for i = 1:2
-                                        for j =1:2
-                                            if(i ==2)
-                                                low_x = -1*quad_width/2;
-                                                high_x = 0; %-pixel_gap/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(i ==1)
-                                                low_x = 0;%pixel_gap/2; 
-                                                high_x = 1*quad_width/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(j ==2)
-                                                low_y = -1*quad_width/2;
-                                                high_y = 0;%-pixel_gap/2;
-                                            end
-                                            if(j ==1)
-                                                low_y = 0;%pixel_gap/2; 
-                                                high_y = 1*quad_width/2;
-                                            end
-                                            [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                                            x_relative = x-spot_x*(0.5*quad_width);
-                                            y_relative = y-spot_y*(0.5*quad_width); 
-                                            I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                                            %^From eq1. "Detection sensitivity of the optical beam deflection
-                                            %method characterized with the optical spot size on the detector"
-                                            I = I_sig;
-                                            %I = I_sig + I_bg;
-                                            quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                                        end
-                                    end
-                                    q_sum = sum(sum(quad));
-                                    X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                                    x_hat_max(p) = X_hat;     
-                     end
-                     min_pos_x = linspace(spot_pos_x(max([i_nn-1,1])), spot_pos_x(min([i_nn+1,length(spot_pos_x)])), num_locations);                 
-                     x_hat_min = ones(length(num_locations),1)';
-                     for p = 1:length(max_pos_x)
-                                    spot_x = min_pos_x(p); %01;%Ranges from -1 to 1.
-                                    spot_y = 0;
-                                    n = simulation_depth;
-                                    quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                                    for i = 1:2
-                                        for j =1:2
-                                            if(i ==2)
-                                                low_x = -1*quad_width/2;
-                                                high_x = -pixel_gap/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(i ==1)
-                                                low_x = pixel_gap/2; 
-                                                high_x = 1*quad_width/2;
-                                                del = abs(low_x-high_x);
-                                            end
-                                            if(j ==2)
-                                                low_y = -1*quad_width/2;
-                                                high_y = -pixel_gap/2;
-                                            end
-                                            if(j ==1)
-                                                low_y = pixel_gap/2; 
-                                                high_y = 1*quad_width/2;
-                                            end
-                                            [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                                            x_relative = x-spot_x*(0.5*quad_width);
-                                            y_relative = y-spot_y*(0.5*quad_width); 
-                                            I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                                            %^From eq1. "Detection sensitivity of the optical beam deflection
-                                            %method characterized with the optical spot size on the detector"
-                                            I = I_sig;
-                                            %I = I_sig + I_bg;
-                                            quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                                        end
-                                    end
-                                    q_sum = sum(sum(quad));
-                                    X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                                    x_hat_min(p) = X_hat;     
-                     end
-                %======================================================================
-                [c , i_np] = min(abs(x_hat_max - (p_np*2-1)));
-                [c , i_nn] = min(abs(x_hat_min - (p_nn*2-1)));
-                op_max = max_pos_x(i_np);
-                op_min = min_pos_x(i_nn);
-                dx_no_gap(index) = (op_max-op_min)*quad_width*2; %b/c normalized to -1,0,1 of quad width;
+                pg = 0;
+                dx_no_gap(index) = quad_snr_to_uncertainty(...
+                    SNR, spot_x, w, beam_power,...
+                    quad_width, pg, simulation_depth,...
+                    num_points);
                 index
+                num_points
         end
-
-
         save('snr_angle_sim','snratio','dx','dx_no_gap');
     else
         load('snr_angle_sim');
     end
     
     if(verbose)
-        var_theta_II = asin(dx./fc)
-        var_theta_no_gap = asin(dx_no_gap./fc)
-        
+        var_theta_II = abs(asin(dx./fc)) %It's abs cause when the snr is really bad, you just don't know and the large values break asin.
+        var_theta_no_gap = abs(asin(dx_no_gap./fc))
+                     
         figure
         semilogy(snratio, var_theta_II);
         hold on;
@@ -579,6 +325,7 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
         title('SNR vs Angular Determination');
         xlabel('System SNR');
         ylabel('Maximum Uncertainty, Radians');
+        legend('Pixel Gap','No Pixel Gap');
     end
     
         
@@ -586,135 +333,16 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     %Section 7:
     %Given the sum output of a quad and the SNR, tell me the position and dx cloud.
     SNR = mag2db(sig_power/ noise_power);
-    quad_output = 0; %-1,0,1;
-    p = (quad_output+1)/2;
-    p_np = p*(1+4/db2mag(SNR));
-    p_nn = p*(1-4/db2mag(SNR));
-    q_max = (p*2-1);
-    q_min = (p_nn*2-1); 
-
-    %Find initial operating points.   
-    [c , i_op] = min(abs(x_hat_pre - (p*2-1)));
-    [c , i_np] = min(abs(x_hat_pre - (p_np*2-1)));
-    [c , i_nn] = min(abs(x_hat_pre - (p_nn*2-1)));
-    op_point = spot_pos_x(i_op);
-    op_max = spot_pos_x(i_np)
-    op_min = spot_pos_x(i_nn)
-    dx_prezoom = (op_max-op_min)*quad_width*2 %b/c normalized to -1,0,1 of quad width;
- 
-    %Zoom way in on operating points and find proper values for inversion.
-    %======================================================================
-         Io = power*2/(pi*w^2); %Peak intensity for gaussian beam.
-         max_pos_x = linspace(spot_pos_x(i_np-1), spot_pos_x(i_np+1), num_locations);
-         x_hat_max = ones(length(num_locations),1)';
-         for p = 1:length(max_pos_x)
-                        spot_x = max_pos_x(p); %01;%Ranges from -1 to 1.
-                        spot_y = 0;
-                        n = simulation_depth;
-                        quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                        for i = 1:2
-                            for j =1:2
-                                if(i ==2)
-                                    low_x = -1*quad_width/2;
-                                    high_x = -pixel_gap/2;
-                                    del = abs(low_x-high_x);
-                                end
-                                if(i ==1)
-                                    low_x = pixel_gap/2; 
-                                    high_x = 1*quad_width/2;
-                                    del = abs(low_x-high_x);
-                                end
-                                if(j ==2)
-                                    low_y = -1*quad_width/2;
-                                    high_y = -pixel_gap/2;
-                                end
-                                if(j ==1)
-                                    low_y = pixel_gap/2; 
-                                    high_y = 1*quad_width/2;
-                                end
-                                [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                                x_relative = x-spot_x*(0.5*quad_width);
-                                y_relative = y-spot_y*(0.5*quad_width); 
-                                I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                                %^From eq1. "Detection sensitivity of the optical beam deflection
-                                %method characterized with the optical spot size on the detector"
-                                I = I_sig;
-                                %I = I_sig + I_bg;
-                                quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                            end
-                        end
-                        q_sum = sum(sum(quad));
-                        X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                        x_hat_max(p) = X_hat;     
-         end
-         min_pos_x = linspace(spot_pos_x(i_nn-1), spot_pos_x(i_nn+1), num_locations);
-         x_hat_min = ones(length(num_locations),1)';
-         for p = 1:length(max_pos_x)
-                        spot_x = min_pos_x(p); %01;%Ranges from -1 to 1.
-                        spot_y = 0;
-                        n = simulation_depth;
-                        quad = [0,0;0,0];%Simulate Gaussian spot on entire quad cell.
-                        for i = 1:2
-                            for j =1:2
-                                if(i ==2)
-                                    low_x = -1*quad_width/2;
-                                    high_x = -pixel_gap/2;
-                                    del = abs(low_x-high_x);
-                                end
-                                if(i ==1)
-                                    low_x = pixel_gap/2; 
-                                    high_x = 1*quad_width/2;
-                                    del = abs(low_x-high_x);
-                                end
-                                if(j ==2)
-                                    low_y = -1*quad_width/2;
-                                    high_y = -pixel_gap/2;
-                                end
-                                if(j ==1)
-                                    low_y = pixel_gap/2; 
-                                    high_y = 1*quad_width/2;
-                                end
-                                [x,y] = meshgrid(low_x:del/n:high_x,low_y:del/n:high_y);
-                                x_relative = x-spot_x*(0.5*quad_width);
-                                y_relative = y-spot_y*(0.5*quad_width); 
-                                I_sig = Io*exp(-2*(x_relative.^2)./(w^2)).*exp(-2*(y_relative.^2)./w.^2); %Beacon Signal.
-                                %^From eq1. "Detection sensitivity of the optical beam deflection
-                                %method characterized with the optical spot size on the detector"
-                                I = I_sig;
-                                %I = I_sig + I_bg;
-                                quad(i,j) = sum(sum(I))* (abs(x(1,1)-x(2,2))^2); %I is power at point per unit area. multiply by area to get the final power. 
-
-                            end
-                        end
-                        q_sum = sum(sum(quad));
-                        X_hat = ((quad(1,1)+quad(1,2)) - (quad(2,1)+quad(2,2))) / q_sum;
-                        x_hat_min(p) = X_hat;     
-         end
-    %======================================================================
-    [c , i_np] = min(abs(x_hat_max - (p_np*2-1)));
-    [c , i_nn] = min(abs(x_hat_min - (p_nn*2-1)));
-    op_max = max_pos_x(i_np)
-    op_min = min_pos_x(i_nn)
-    dx = (op_max-op_min)*quad_width*2 %b/c normalized to -1,0,1 of quad width;
+    dx = quad_snr_to_uncertainty(SNR, spot_x,...
+    w, beam_power, quad_width, pixel_gap,...
+    simulation_depth, num_locations )
     
     if(verbose)
         var_theta_II = asin(dx/fc)
         hold on
         plot(SNR,var_theta_II,'*');
-        legend('SNR/Rad plot','Given SNR, angle uncertainty');
-
-        figure
-        hold on;
-        plot(spot_pos_x, x_hat);
-        plot(op_point, quad_output, '*');
-        plot(op_min, q_min, '*');
-        plot(op_max, q_max, '*');
-        title('Position To Quad Output Curve');
-        xlabel('True X position (Normalized to Width of Detector)');
-        ylabel('Output of Summations');
-        legend('Operating Curve','Ideal Point','Minimum Possible Point','Maximum Possible Point');
-    end
+        legend('SNR/Rad plot','Given SNR, angle uncertainty','Satellite Operating Point');
+	end
     angle_uncertainty = var_theta_II;
     
     
@@ -724,9 +352,10 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     %SNR = get_snr(tia_sig, tia_noise, df);
     %mag2db(SNR) %Sanity check component. from Theory of tracking accuracy of
     %laser systems. eq 62
-    spot_size = 0.001; %.2mm
+    spot_size = w*2; %0.001; %.2mm
     var_x = SNR.^-1.*(1-8./SNR)./(1+8./SNR).^2;
     dx = spot_size.^2*var_x %denormalized variance. eq 3b
+    dx = spot_size*var_x %denormalized variance. eq 3b
     fc = 0.015 %focal distance assuming simple telescope (it's not)
     var_theta_II = asin(dx/fc);
 
