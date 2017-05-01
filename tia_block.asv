@@ -188,7 +188,10 @@ function output_package= tia_block(sigs);
     
     offset_rms = optical_offset(1); %DC amplified voltage.
     a = (v_noise.^2 + i_noise.^2).^0.5;
-    tia_rms = (get_rms(a,df)^2 + v_res_noise^2 + (i_dark*Rf).^2) ^0.5;
+    tia_rms = (get_rms(a,df)^2 + v_res_noise^2) ^0.5;
+    opt_rms = get_rms(optical_noise,df);
+    sig_rms = optical_signal(1); %Assumes modulation is well within bandwidth of TIA circuit.
+    tia_noise = (v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
         
     if(verbose == 1)
         figure

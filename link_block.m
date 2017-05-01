@@ -142,15 +142,17 @@ function output_package= link_block()
     
     if(verbose)
         figure;
-        hold on;
         t = linspace(1,100);
         o = ones(length(t),1)';
-        plot(t, mag2db(o.*Prx));
-        plot(t, mag2db(o.*atmo_signal));
-        plot(t, mag2db(o.*atmo_noise)); %+atmo_background.^2).^0.5));
-        plot(t, mag2db(o.*Pbg));
+        semilogy(t, (o.*Prx));
+        hold on;
+        semilogy(t, (o.*atmo_signal));
+        semilogy(t, (o.*atmo_noise)); %+atmo_background.^2).^0.5));
+        semilogy(t, (o.*Pbg));
         
         title('Atmospheric Effects');
+        ylabel('Watts on Quad Cell');
+        xlabel('Scalars');
         legend('Signal After Propogation Loss',...
             'Signal After Atmospheric Loss',...
             'Total Atmo-Noise',...
