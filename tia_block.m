@@ -172,70 +172,69 @@ function output_package= tia_block(sigs);
         if(verbose == 1)  
             figure
             loglog(w,i_noise);
-            title('Total Current Refered Noise (TIA)');
+            hold on;
+            loglog(w,i_noise_opamp);
+            loglog(w,i_noise_shot);            
+            title('Current Noise Sources (Through Rf)');
             xlabel('Hz');
             ylabel('V per rt Hz');
+            legend('Total inoise','Opamp inoise','Shot noise');
+        
         end
     %%
     %Putting all the TIA stuff together;
     %output_signal = (signal_optical*responsivity) * noise_tf; %Input optical signal through the circuit
-    output_signal = optical_signal;
-    output_offset = optical_offset;
-    output_noise = (optical_noise.^2 + v_noise.^2 + i_noise.^2 + v_res_noise.^2 + (i_dark*Rf).^2) .^0.5;
-    %tia_noise = (v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
-    %^THIS IS WRONG. RES NOISE IS ALREADY AN RMS.
+    signal_rms = optical_signal;
+    offset_rms = optical_offset +  PHOTODIODE_DARK_CURRENT .*Rf;
+    hz_noise = (v_noise.^2 + i_noise.^2).^0.5;
+    noise_rms = (optical_noise.^2 + get_rms(hz_noise,df).^2 + v_res_noise.^2 ) .^0.5;
     
-    
-    offset_rms = optical_offset(1); %DC amplified voltage.
-    a = (v_noise.^2 + i_noise.^2).^0.5;
-    tia_rms = (get_rms(a,df)^2 + v_res_noise^2 + (i_dark*Rf).^2) ^0.5;
         
     if(verbose == 1)
+%         figure   
+%         loglog(w,(output_noise), '*');
+%         hold on
+%         loglog(w,(i_noise));
+%         loglog(w,(v_noise),'d');
+%         title('Frequency Noise Contributions');
+%         xlabel('10^x Hz');
+%         ylabel('V per rt Hz');
+%         legend('Total Noise','Current Noise','Voltage Noise');
+%         
+        o = ones(50,1)';
+        l = linspace(1,10,length(o));
         figure
-        hold on
-        tia_noise = (v_noise.^2 + i_noise.^2 + v_res_noise.^2) .^0.5;
-        plot(log10(w),log10(i_noise_opamp*Rf));
-        plot(log10(w),log10(tia_noise),'*');
-        plot(log10(w),log10(v_res_noise.*ones(1,length(w)).*(w<bandwidth)));
-        plot(log10(w),log10(v_noise));
-        plot(log10(w),log10(i_noise_shot*Rf));
-        plot(log10(w),log10(i_dark*Rf));
-        title('Noise Contributions (Through Opamp)');
-        xlabel('10^x Hz');
-        ylabel('V per rt Hz');
-        legend('Opamp inoise thru Rf','Total noise', 'Resistor RMS','Opamp Voltage Noise', 'Shot Noise  thru Rf','Dark Current thru Rf RMS');
-
-
-        
-        figure
-        loglog(w,output_noise,'.');
+        loglog(l,o.*signal_rms,'-.'); 
         hold on;
-        loglog(w,output_signal);
-        loglog(w,tia_noise);
-        loglog(w,optical_noise);
-        loglog(w, ((output_offset+output_signal).^2 + tia_noise.^2 + optical_noise.^2).^0.5);
-        legend('Total Noise', 'Output Signal', 'TIA refered noise', 'Optical Signal Noise','Max Output Range');
-        title('TIA Signal and Noise');
-        xlabel('Hz');
-        ylabel('V per rt Hz');
-        %loglog(OUTPUT);
-        'Total SNR up to TIA block:'
-        get_snr(output_signal, output_noise, df)
+        loglog(l,o.*offset_rms,'-.'); 
+        loglog(l,o.*noise_rms,'-.'); 
+        loglog(l,o.*get_rms(v_noise,df)); 
+        loglog(l,o.*get_rms(i_noise,df)); 
+        loglog(l,o.*v_res_noise); 
+        loglog(l,o.*optical_noise); 
+        title('RMS Values for signals and noises');
+        ylabel('Volts');
+        xlabel('dimensionless (Scalar Values)');
+        legend('Signal RMS', 'Total Noise RMS',...
+            'DC Offset (Optical, Dark)',...
+            'Voltage Noise RMS', 'Current Noise RMS',...
+            'Resistor RMS Noise', 'Optical RMS Noise');
+        
+        
         
         o = ones(50,1)';
         l = linspace(1,10,length(o));
         figure
-        loglog(l,o.*sig_rms);
+        loglog(l,o.*signal_rms);
         hold on;
-        loglog(l,o.*opt_rms);
         loglog(l,o.*offset_rms);
-        loglog(l,o.*tia_rms);
+        loglog(l,o.*noise_rms);
         title('RMS Values for signals and noises');
         ylabel('Volts');
         xlabel('dimensionless (Scalar Values)');
-        legend('Signal RMS', 'Optical Noise RMS', 'Background Offset RMS', 'TIA Noise RMS');
+        legend('Signal RMS', 'Offset RMS', 'Noise RMS');
         
     end
-    output_package = {sig_rms, opt_rms, offset_rms, tia_rms};
+    output_package = {signal_rms, noise_rms, offset_rms};
 end
 

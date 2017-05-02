@@ -2,11 +2,8 @@ function adc_outputs = adc_block( signal_levels)
 %These are all static voltage levels
 %or Vrms of each input. 
 input_signal = signal_levels{1};
+input_noise = signal_levels{2};
 background_irradiance = signal_levels{3};
-input_noise = signal_levels{3};
-input_signal = input_signal(1);
-background_irradiance = background_irradiance(1);
-input_noise = input_noise(1);
 
 global verbose;
 
@@ -14,7 +11,7 @@ safety_factor = 2;
 %Multiplies the max signal by
 %this to set the max sampling range.
 %safety_factor*total_signal = highest voltage we can measure
-%to prevent railing. 
+%to prevent railing.  
 
 %ADC definition.
 v_ref = 3.3;
@@ -77,7 +74,7 @@ enob_signal = log2(input_signal/(voltage_per_division));
          hold on;
          semilogx(background_ranges./input_signal, snr_bits);
          semilogx(background_ranges./input_signal, snr_np);
-         semilogx(background_ranges./input_signal, gains, '-.');
+         semilogx(background_ranges./input_signal, mag2db(gains), '-.');
          semilogx(simmed_ratio, sqnr_signal, '*');
          semilogx(simmed_ratio, pga_gain, '*');
          title('SNR of Signal, BG Sensitivity Study');
