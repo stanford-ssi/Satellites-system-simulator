@@ -18,7 +18,7 @@ scenario = 2;
 
 
 
-
+verbose = 0;
 %%
 link_package = link_block(); 
 %%

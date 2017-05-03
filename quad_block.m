@@ -291,7 +291,7 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
         dx = ones(num_points,1);
         for index = 1:num_points
                 SNR = snratio(index);
-                dx(index) = quad_snr_to_uncertainty(SNR, spot_x,...
+                [a dx(index)] = quad_snr_to_uncertainty(SNR, spot_x,...
                 w, beam_power, quad_width, pixel_gap, simulation_depth, num_points);
                 index
                 num_points
@@ -301,7 +301,7 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
         for index = 1:num_points
                 SNR = snratio(index);
                 pg = 0;
-                dx_no_gap(index) = quad_snr_to_uncertainty(...
+                [a dx_no_gap(index)] = quad_snr_to_uncertainty(...
                     SNR, spot_x, w, beam_power,...
                     quad_width, pg, simulation_depth,...
                     num_points);
@@ -314,8 +314,8 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     end
     
     if(verbose)
-        var_theta_II = abs(asin(dx./fc)) %It's abs cause when the snr is really bad, you just don't know and the large values break asin.
-        var_theta_no_gap = abs(asin(dx_no_gap./fc))
+        var_theta_II = abs(asin(dx./fc)); %It's abs cause when the snr is really bad, you just don't know and the large values break asin.
+        var_theta_no_gap = abs(asin(dx_no_gap./fc));
                      
         figure
         semilogy(snratio, var_theta_II);
@@ -338,7 +338,7 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     simulation_depth, num_locations )
     
     if(verbose)
-        var_theta_II = asin(dx/fc)
+        var_theta_II = asin(dx/fc);
         hold on
         plot(SNR,var_theta_II,'*');
         legend('SNR/Rad plot','Given SNR, angle uncertainty','Satellite Operating Point');
@@ -354,9 +354,8 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     %laser systems. eq 62
     spot_size = w*2; %0.001; %.2mm
     var_x = SNR.^-1.*(1-8./SNR)./(1+8./SNR).^2;
-    dx = spot_size.^2*var_x %denormalized variance. eq 3b
-    dx = spot_size*var_x %denormalized variance. eq 3b
-    fc = 0.015 %focal distance assuming simple telescope (it's not)
+    dx = spot_size.^2*var_x; %denormalized variance. eq 3b
+    fc = 0.015; %focal distance assuming simple telescope (it's not)
     var_theta_II = asin(dx/fc);
 
     display =1;
@@ -373,12 +372,7 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
         legend('Var vs SNR','Target Variance');
 
     end
-
-    if(verbose ==1)
-        'Angle Variance: '
-        var_theta_II
-    end
-        target_theta = 1E-6;
+    target_theta = 1E-6;
     tg = ones(1,length(SNR))*target_theta;
     figure
     semilogy(mag2db(SNR), var_theta_II);
@@ -386,8 +380,40 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     xlabel('SNR (dB)');
     ylabel('Radians');
 
-    
+
+%%
+simulation_depth = 70;
+num_points = 30;
+num_locations = 1000;
+snratio = linspace(3, 100,num_points);
+dx = ones(num_points,1);
+lin_dx = ones(num_points,1);
+verbose = 0;
+for index = 1:num_points
+        SNR = snratio(index);
+        [dx(index), lin_dx(index)] = quad_snr_to_uncertainty(SNR, spot_x,...
+        w, beam_power, quad_width, pixel_gap, simulation_depth, num_points);
+        index
+        num_points
 end
-    
+%%
+figure
+var_theta_II = asin(dx/fc);
+%semilogy(snratio, var_theta_II );
+%hold on
+lin_dx2 = (lin_dx*2*quad_width)*w; %I have no idea why multiplying by w seems to make it fit Kazovsky's model.
+var_theta_II = asin(lin_dx2/fc);
+semilogy(snratio, var_theta_II );
+
+
+legend('Succsesive aprox','linear');
+
+end
+
+
+
+
+
+
     
    
