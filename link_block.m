@@ -21,7 +21,7 @@ function output_package= link_block()
     
     if(scenario == 2)
         orbit_dist = 575e3; % distance straight overhead 0deg zenith ~600km
-        zenith_ang = 0
+        zenith_ang = 0;
     end
     if(scenario == 0)
         orbit_dist = 1000e3; % max distance at 65deg zenith ~1000km
@@ -74,11 +74,16 @@ function output_package= link_block()
     Lpoint = 10^(-3/10); % 3dB pointing / jitter loss
 
     Prx_ap = I_spot*A_rx_eff; % Power available at receiver aperture
-    Prx = Prx_ap*Lrx*Lpoint % Power collected by receiver aperture (incl losses)
+    Prx = Prx_ap*Lrx*Lpoint; % Power collected by receiver aperture (incl losses)
 
     Prx_bg = I_background*A_rx_eff; % Background power at receiver aperture
-    Pbg = Prx_bg*Lrx*Lpoint % BG Power collected by receiver aperture (incl losses)
+    Pbg = Prx_bg*Lrx*Lpoint; % BG Power collected by receiver aperture (incl losses)
 
+    if(verbose)
+        Prx
+        Pbg
+        r_spot
+    end
 
 
     %Weirdly, getting different answers for ideal transmission

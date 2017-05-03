@@ -11,7 +11,7 @@ global verbose
 verbose = 1;
 
 global scenario
-scenario = 0;
+scenario = 2;
 %0 == worst case, default, conservative.
 %1 == typical behavior
 %2 == Optimistic. 

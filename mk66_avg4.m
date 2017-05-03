@@ -3,6 +3,7 @@ function vals = mk66_avg4()
     %Differential operation mode
     %Averages 4 samples in HW.
     global best_case
+    NAME = 'MK66_4avg';
     if(best_case >= 1)
         ENOB = 13.8; %Typical
     else
@@ -11,5 +12,5 @@ function vals = mk66_avg4()
     %WARNING NOT SPECC'D:
     THD = -94;%dB, worst case
     %THD not specc'ed on avg4! only specc'd 32
-    vals = {ENOB, THD};
+    vals = {ENOB, THD, NAME};
 end

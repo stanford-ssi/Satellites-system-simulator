@@ -33,7 +33,7 @@ function output_package= tia_block(sigs);
     %% System Parameters:
     opspecs = opa657(w);
     photspecs = s5981();
-    Rf = 1E3; %1k CHANGE VALUE HERE
+    Rf = 10E3; %1k CHANGE VALUE HERE
     Cf = 1E-12; %1pF CHANGE VALUE HERE
     
     T = 273; %Kelvin
@@ -215,8 +215,8 @@ function output_package= tia_block(sigs);
         title('RMS Values for signals and noises');
         ylabel('Volts');
         xlabel('dimensionless (Scalar Values)');
-        legend('Signal RMS', 'Total Noise RMS',...
-            'DC Offset (Optical, Dark)',...
+        legend('Signal RMS', 'DC Offset (Optical, Dark)',...
+            'Total Noise RMS',...
             'Voltage Noise RMS', 'Current Noise RMS',...
             'Resistor RMS Noise', 'Optical RMS Noise');
         

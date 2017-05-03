@@ -15,15 +15,17 @@ safety_factor = 2;
 
 %ADC definition.
 v_ref = 3.3;
-adc_vals = ltc25000();
+%adc_vals = ltc25000();
+adc_vals = mk66_avg32();
 enob_adc = adc_vals{1};
 thd_adc = adc_vals{2};
+adc_name = adc_vals{3};
 
 %%Input signal simulation assuming PGA maximizing dynamic range.
 %
     total_inp_voltage = input_signal + background_irradiance + input_noise;
     signal_dr = total_inp_voltage.*safety_factor; %Safety factor to prevent railing. 
-    pga_gain = v_ref ./ signal_dr;
+    pga_gain = mag2db(v_ref ./ signal_dr);
     sim_vpd = signal_dr.*(2.^-enob_adc);
     enob_signal = log2( input_signal ./ sim_vpd );
     sqnr_signal = 20*log10(2.^enob_signal); %https://en.wikipedia.org/wiki/Signal-to-quantization-noise_ratio 
@@ -52,12 +54,14 @@ enob_signal = log2(input_signal/(voltage_per_division));
     
     voltage_per_division = dynamic_range.*(2.^-enob_adc);
     enob_swept = log2( input_signal ./ voltage_per_division );
+    %%
+    %
     if(verbose)
         figure
         semilogx(background_ranges./input_signal, enob_swept);
         hold on;
         semilogx(background_ranges./input_signal, ones(length(background_ranges),1)'.* enob_adc, '.');
-        title('ENOB of Signal, BG Sensitivity Study');
+        title(['ENOB of Signal, BG Sensitivity Study, ', adc_name] );
         ylabel('ENOB of Signal w/ Safety factor');    
         xlabel('Ratio of BG irradiance to signal irradiance');
         legend('Signal ENOB', 'Ideal ADC ENOB');
@@ -77,10 +81,10 @@ enob_signal = log2(input_signal/(voltage_per_division));
          semilogx(background_ranges./input_signal, mag2db(gains), '-.');
          semilogx(simmed_ratio, sqnr_signal, '*');
          semilogx(simmed_ratio, pga_gain, '*');
-         title('SNR of Signal, BG Sensitivity Study');
+         title(['SNR of Signal, BG Sensitivity Study, ', adc_name]);
          ylabel('SNR of Signal w/ Safety Factor and Harmonic Distortion');
          xlabel('Ratio of BG irradiance to signal irradiance');
-         legend('SNR with THD', 'SNR of Uniform Distribution','SNR via SigRms^2/One Quant Level','PGA gain required (linear)');
+         legend('SNR with THD', 'SNR of Uniform Distribution','SNR via SigRms^2/One Quant Level','PGA gain required (dB)','Op Point SQNR', 'Op Point PGA Gain');
     
          
     end
@@ -110,8 +114,7 @@ if(verbose)
      hold on;
      plot(a,o.*snr_ac_coupled);
      plot(a,o.*snr_full_coupled);
-     title('AC vs Full Coupling of Expected Signal');
-     ylabel('ENOB');
+     ylabel('SNR');
      xlabel('Scalars. Dimensionless');
      legend('AC Coupled', 'Background Coupled'); 
      axis([1 10 30 100]);
@@ -119,14 +122,16 @@ if(verbose)
      hold on;
      plot(a,o.*snr_ac_coupled);
      plot(a,o.*snr_full_coupled);
-     ylabel('ENOB');
+     ylabel('SNR');
      xlabel('Scalars. Dimensionless');
      legend('AC Coupled', 'Background Coupled'); 
- end
+     title(['AC v DC Coupling, ',adc_name]);
+     
+end
  
 total_inp_voltage = input_signal + background_irradiance + input_noise;
     signal_dr = total_inp_voltage.*safety_factor; %Safety factor to prevent railing. 
-    pga_gain = v_ref ./ signal_dr;
+    pga_gain = mag2db(v_ref ./ signal_dr);
     sim_vpd = signal_dr.*(2.^-enob_adc);
     enob_signal = log2( input_signal ./ sim_vpd );
     sqnr_signal = 20*log10(2.^enob_signal); %https://en.wikipedia.org/wiki/Signal-to-quantization-noise_ratio 

@@ -15,12 +15,12 @@ function uncertainty_x = quad_snr_to_uncertainty(SNR, spot_x,...
         spot_y = 0;                             
         possible_op_points = linspace(-1,1,1000);
         x_hat_pre = ones(1000,1)';
-        for p=1:1000
-            spot_x = possible_op_points(p);
+        for ind=1:1000
+            spot_x = possible_op_points(ind);
             [x,y] = integrate_quad(spot_x,spot_y,...
             w,beam_power,quad_width,...
             pixel_gap, simulation_depth);
-            x_hat_pre(p) = x; 
+            x_hat_pre(ind) = x; 
         end
         [c , i_op] = min(abs(x_hat_pre - (p*2-1)));
         [c , i_np] = min(abs(x_hat_pre - (p_np*2-1)));
@@ -29,6 +29,16 @@ function uncertainty_x = quad_snr_to_uncertainty(SNR, spot_x,...
         op_max = possible_op_points(i_np);
         op_min = possible_op_points(i_nn);
         dx_prezoom = (op_max-op_min)*quad_width*2 %b/c normalized to -1,0,1 of quad width;
+        %%
+        %Test assuming linear about op-point.
+        x1 = x_hat_pre(i_op);
+        x2 = x_hat_pre(i_op+1);
+        y1 = possible_op_points(i_op);
+        y2 = possible_op_points(i_op+1);
+        slope = (y2-y1)/(x2-x1);
+        power_diff = p_np - p;
+        dy = slope*power_diff;
+        
         %%
         %Zoom way in on operating points and find proper values for inversion.
         %======================================================================
