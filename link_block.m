@@ -28,7 +28,7 @@ function output_package= link_block()
         zenith_ang = 65/180*pi; 
     end
     
-    tx_divergance_angle = 1.1E-3; %1.5mRad 
+    tx_divergance_angle = 0.1E-3; %100uRad 
     Ptx = 9.25; % 9.25 W out
     Ltx = 10^(-4.4/10); % 4.4dB optical loss out of beacon telescope.
     
