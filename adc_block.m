@@ -6,15 +6,16 @@ input_noise = signal_levels{2};
 background_irradiance = signal_levels{3};
 
 global verbose;
-
-safety_factor = 2; 
+global v_ref;
+global safety_factor;
+%safety_factor = 2; 
 %Multiplies the max signal by
 %this to set the max sampling range.
 %safety_factor*total_signal = highest voltage we can measure
 %to prevent railing.  
 
 %ADC definition.
-v_ref = 3.3;
+%v_ref = 3.3;
 %adc_vals = ltc25000();
 adc_vals = mk66_avg32();
 enob_adc = adc_vals{1};

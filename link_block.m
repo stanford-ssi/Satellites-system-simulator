@@ -18,6 +18,9 @@ function output_package= link_block()
     
     global verbose
     global scenario
+    global tx_divergance_angle
+    %tx_divergance_angle = 0.5E-3; %100uRad 
+    
     
     if(scenario == 2)
         orbit_dist = 575e3; % distance straight overhead 0deg zenith ~600km
@@ -28,7 +31,6 @@ function output_package= link_block()
         zenith_ang = 65/180*pi; 
     end
     
-    tx_divergance_angle = 0.1E-3; %100uRad 
     Ptx = 9.25; % 9.25 W out
     Ltx = 10^(-4.4/10); % 4.4dB optical loss out of beacon telescope.
     
@@ -140,7 +142,7 @@ function output_package= link_block()
     
     %%
     %Putting it all together
-    total_signal = atmo_signal
+    total_signal = atmo_signal;
     total_noise = atmo_noise;
     total_bg = Pbg; 
     
@@ -164,7 +166,14 @@ function output_package= link_block()
             'Atmospheric Background Irradiance');
     end
     
-    output_package = {total_signal , total_noise, total_bg};
+    if(verbose == -2)
+        total_signal
+        total_noise
+        total_bg
+        r_spot
+    end
+    
+    output_package = {total_signal , total_noise, total_bg, r_spot};
 end
 
 

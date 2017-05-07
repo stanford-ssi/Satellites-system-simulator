@@ -1,9 +1,13 @@
 function output_package= tia_block(sigs);
     %Inputs: Watts delivered to an individual diode.
+    %Outputs: = {signal_rms, noise_rms, offset_rms};
+
     %This system operates in the frequency domain, so don't
     %input a time varying signal into the sigs spot.
     
     global verbose;
+    global dark % 0 ==Model dark current as DC with shot noise
+        dark=0; % NOT MODELED: 1 ==Model dark current as white noise at that power.
     %Helpful References:
     %http://www.ti.com/lit/an/sboa060/sboa060.pdf
     % Walks through the noise calculations of a tia^
@@ -33,7 +37,7 @@ function output_package= tia_block(sigs);
     %% System Parameters:
     opspecs = opa657(w);
     photspecs = s5981();
-    Rf = 10E3; %1k CHANGE VALUE HERE
+    global Rf %1k CHANGE VALUE HERE
     Cf = 1E-12; %1pF CHANGE VALUE HERE
     
     T = 273; %Kelvin
@@ -69,7 +73,7 @@ function output_package= tia_block(sigs);
     %Misc Amplifier:
         XC2 = 1./(C2.*w);
         transfer_function = (1./R2 + 1./XC2).^-1;
-        if(verbose == 1)
+        if(verbose >= 2)
             figure
             plot(log10(w),mag2db(transfer_function));
             title('Transfer function of OpAmp');
@@ -99,7 +103,7 @@ function output_package= tia_block(sigs);
         %IN nV. The nV is important for non-weird scaling.
         get_rms(v_noise,df);
     %Misc Figures for sanity
-    if(verbose == 1)
+    if(verbose >= 2)
         figure
         hold on
         plot(log10(w),mag2db(abs(AB)));
@@ -135,7 +139,7 @@ function output_package= tia_block(sigs);
         optical_noise =  Rf .* optical_noise_tot .* responsivity;
         optical_signal = Rf.* signal_optical .* responsivity;
         optical_offset = Rf .* offset_optical .* responsivity;
-        if(verbose == 1)
+        if(verbose >= 2)
             %Figure of optical noise through circuit:
             figure
             o = ones(50,1)';
@@ -157,40 +161,37 @@ function output_package= tia_block(sigs);
     %%
     %Input Current Noise
     %warning, these are functions of frequency. Must have some w defined.
-        c = 1.60217662E-19; %TODO, HOW to actually do shot noise. This is an educated guess.
-        SHOT = 2.*c.*I_DC;
-        i_n =  (OPAMP_INOISE.^2 + SHOT.^2 + PHOTODIODE_DARK_CURRENT.^2).^.5;
+        q = 1.60217662E-19; %TODO, HOW to actually do shot noise. This is an educated guess.
+        v_shot = ( 2*q*(PHOTODIODE_DARK_CURRENT + ((signal_optical+offset_optical)*responsivity))*bandwidth)^0.5 *Rf ;
         
         %Z2 = (R2.^-1 + (1./(w.*C2)).^-1).^-1;    
         %TODO; DO I ALSO MULTIPLY TF? IDK!
         i_noise_opamp =  OPAMP_INOISE .* transfer_function;  
-        i_noise_shot =  SHOT .*transfer_function;
-        i_dark = PHOTODIODE_DARK_CURRENT .*transfer_function;
-        i_noise = ((i_noise_opamp.^2 + i_noise_shot.^2 ).^0.5) .* transfer_function;
+        i_noise = ((i_noise_opamp.^2 )).^0.5; %+ i_noise_shot.^2 ).^0.5);
         
         
-        if(verbose == 1)  
+        if(verbose >= 2)  
             figure
             loglog(w,i_noise);
             hold on;
             loglog(w,i_noise_opamp);
-            loglog(w,i_noise_shot);            
             title('Current Noise Sources (Through Rf)');
             xlabel('Hz');
             ylabel('V per rt Hz');
-            legend('Total inoise','Opamp inoise','Shot noise');
+            legend('Opamp inoise');
         
         end
     %%
     %Putting all the TIA stuff together;
     %output_signal = (signal_optical*responsivity) * noise_tf; %Input optical signal through the circuit
     signal_rms = optical_signal;
-    offset_rms = optical_offset +  PHOTODIODE_DARK_CURRENT .*Rf;
+    offset_rms = offset_optical*Rf +  PHOTODIODE_DARK_CURRENT .*Rf;
     hz_noise = (v_noise.^2 + i_noise.^2).^0.5;
-    noise_rms = (optical_noise.^2 + get_rms(hz_noise,df).^2 + v_res_noise.^2 ) .^0.5;
+    noise_rms = (optical_noise.^2 + get_rms(hz_noise,df).^2 + v_res_noise.^2 + v_shot.^2 ) .^0.5;
+    circuit_noise = (get_rms(hz_noise,df).^2 + v_res_noise.^2 + v_shot^2) .^0.5;
     
         
-    if(verbose == 1)
+    if(verbose >= 1)
 %         figure   
 %         loglog(w,(output_noise), '*');
 %         hold on
@@ -211,14 +212,15 @@ function output_package= tia_block(sigs);
         loglog(l,o.*get_rms(v_noise,df)); 
         loglog(l,o.*get_rms(i_noise,df)); 
         loglog(l,o.*v_res_noise); 
+        loglog(l,o.*v_shot);
         loglog(l,o.*optical_noise); 
         title('RMS Values for signals and noises');
         ylabel('Volts');
         xlabel('dimensionless (Scalar Values)');
         legend('Signal RMS', 'DC Offset (Optical, Dark)',...
             'Total Noise RMS',...
-            'Voltage Noise RMS', 'Current Noise RMS',...
-            'Resistor RMS Noise', 'Optical RMS Noise');
+            'Voltage Noise RMS', 'Current Reffered Voltage Noise RMS',...
+            'Resistor RMS Noise', 'Shot RMS', 'Optical RMS Noise');
         
         
         
@@ -235,6 +237,6 @@ function output_package= tia_block(sigs);
         legend('Signal RMS', 'Offset RMS', 'Noise RMS');
         
     end
-    output_package = {signal_rms, noise_rms, offset_rms};
+    output_package = {signal_rms, noise_rms, offset_rms,circuit_noise};
 end
 

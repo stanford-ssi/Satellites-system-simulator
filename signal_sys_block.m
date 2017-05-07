@@ -26,7 +26,7 @@ safety_factor = 2;
 %to prevent railing.  
 
 %ADC definition.
-v_ref = 1;
+global v_ref
 %adc_vals = ltc25000();
 adc_vals = mk66_avg4();
 enob_adc = adc_vals{1};
