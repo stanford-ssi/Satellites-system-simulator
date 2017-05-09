@@ -4,7 +4,7 @@ function output_package= tia_block(sigs);
 
     %This system operates in the frequency domain, so don't
     %input a time varying signal into the sigs spot.
-    
+    global LT_SPICE
     global verbose;
     global dark % 0 ==Model dark current as DC with shot noise
         dark=0; % NOT MODELED: 1 ==Model dark current as white noise at that power.
@@ -13,11 +13,18 @@ function output_package= tia_block(sigs);
     % Walks through the noise calculations of a tia^
     
     
-    %all power divided by 4 because thats how much power would fall on a
+    %Assuming power on single diode. 
     %single diode
-    signal_optical = sigs{1}/4; %In Watts delivered to an individual diode. 
-    noise_optical = sigs{2}/4;
-    offset_optical = sigs{3}/4; %From Earth Albedo. Treated as a white noise source of this amplitude.
+    signal_optical = sigs{1}; %In Watts delivered to an individual diode. 
+    noise_optical = sigs{2};
+    offset_optical = sigs{3}; %From Earth Albedo. Treated as a white noise source of this amplitude.
+    
+   
+    
+    
+    
+    
+    
     
     
     
@@ -38,6 +45,7 @@ function output_package= tia_block(sigs);
     opspecs = opa657(w);
     photspecs = s5981();
     global Rf %1k CHANGE VALUE HERE
+    global Cf;
     Cf = 1E-12; %1pF CHANGE VALUE HERE
     
     T = 273; %Kelvin
@@ -54,10 +62,13 @@ function output_package= tia_block(sigs);
     OPAMP_VNOISE = opspecs{3};
     OPAMP_INOISE = opspecs{4};
     OPAMP_OPENLOOPGAIN = opspecs{5};
+    OPAMP_GBP = opspecs{6};
     PHOTODIODE_RESPONSIVITY = photspecs{1};
     PHOTODIODE_CAPACITANCE = photspecs{2};
     PHOTODIODE_RESISTANCE = photspecs{3};
     PHOTODIODE_DARK_CURRENT = photspecs{4};
+    
+    Cf = sqrt(PHOTODIODE_CAPACITANCE/(2*pi*OPAMP_3DB_OPENLOOP*Rf)); %http://www.ti.com/lit/an/snoa942/snoa942.pdf
     R2 = Rf; %Feedback resistance
     C2 = Cf; %Feedback capacitance
     R1 = PHOTODIODE_RESISTANCE; %Diode shunt resistance
@@ -68,7 +79,26 @@ function output_package= tia_block(sigs);
     I_DC = responsivity*opt_currents + PHOTODIODE_DARK_CURRENT; %used in shot noise calcs.
     
     
-    
+    %%
+    % If using LT sims, we can skip all this.
+     if(LT_SPICE == 1)
+        if(Rf == 100E3)
+            circuit_rms = 12.945E-6;%simmed from lt spice.
+                        %10Hz - 5kHz
+                        %(Rf, Cf, Cd, RMS)
+                        %(100k, 2pF, 35pF, 12.945uV);
+        end
+        q = 1.60217662E-19; %TODO, HOW to actually do shot noise. This is an educated guess.
+        v_shot = ( 2*q*(PHOTODIODE_DARK_CURRENT + ((signal_optical+offset_optical)*responsivity))*bandwidth)^0.5 *Rf ;
+        
+        circuit_rms = sqrt(circuit_rms^2 + v_shot^2);
+        signal_rms = Rf*signal_optical*responsivity;
+        offset_rms = Rf*offset_optical*responsivity;
+        optical_rms = Rf*responsivity*noise_optical;
+        noise_rms = sqrt(circuit_rms^2 +optical_rms^2);
+        output_package = {signal_rms, noise_rms, offset_rms, circuit_rms, optical_rms};
+        return
+    end
     %% 
     %Misc Amplifier:
         XC2 = 1./(C2.*w);
@@ -237,6 +267,6 @@ function output_package= tia_block(sigs);
         legend('Signal RMS', 'Offset RMS', 'Noise RMS');
         
     end
-    output_package = {signal_rms, noise_rms, offset_rms,circuit_noise};
+    output_package = {signal_rms, noise_rms, offset_rms, circuit_noise, optical_noise};
 end
 

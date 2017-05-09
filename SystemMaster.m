@@ -1,6 +1,7 @@
 clear 
 %Don't set clear all. wipes debug points
 close all
+
 %Helpful References:
 %http://www.ti.com/lit/an/sboa060/sboa060.pdf
 % Walks through the noise calculations of a tia^
@@ -19,22 +20,70 @@ global tx_divergance_angle;
 global calib_power;
 global calib_spot;
 calib_spot = 0.004/2; %4mm diameter
-tx_divergance_angle = 0.5E-3; %500uRad     
+tx_divergance_angle = 0.5E-3; %500uRad
+%tx_divergance_angle = 1.1E-3; %1.1mRad
+global LT_SPICE; %Whether to use LT-spice sims for TIA. (You probably should)
 global Rf;
 global v_ref;
 global safety_factor;
+global Cf; %updated Automatically in TIA block.
+LT_SPICE = 0;
 safety_factor = 2;
-v_ref = 1;
-Rf = 10E3;
+v_ref = 5;
+Rf = 100E3;
 verbose = 0;
+
+%%
+%========================================================
+    %PGA mode vs pure ADC Testground
+    link_package = link_block(); 
+    link_package{1} = link_package{1}/4;
+    link_package{2} = link_package{2}/4;
+    link_package{3} = link_package{3}/4;
+    link_package{4} = link_package{4}/4;
+    total_optical = (link_package{1}+link_package{2}+link_package{3});
+    q = 1.60217662E-19; %TODO, HOW to actually do shot noise. This is an educated guess.
+    ns = ( 2*q*(PHOTODIODE_DARK_CURRENT + ((total_optical)*responsivity))*bandwidth)^0.5 *Rf ;
+       
+    %% 
+    %Pure ADC
+    noise_tia = 12.945E-6;
+    noise_shot = ns;
+    noise_adc = 
+    signal = link_package{1}*Rf*0.72;
+    noise = sqrt(noise_tia^2+noise_shot^2+noise_adc^2);
+    max_v = total_optical*Rf*0.72+dark_cur*Rf;
+    snr_pure = mag2db(signal/noise);
+    %%
+    %With PGA and filters and Teensy
+    pga_gain = 300;
+    noise_tia = pga_gain * 12.945E-6;
+    noise_shot = pga_gain * ns;
+    noise_adc = 
+    noise_filter = pga_gain
+    noise_pga1 = 
+    
+    
+    signal = link_package{1}*Rf*0.72;
+    noise = sqrt(noise_tia^2+noise_shot^2+noise_adc^2);
+    max_v = (link_package{1}+link_package{2}+link_package{3})*Rf*0.72+dark_cur*Rf;
+    
+
+
 
 %%
 %Test Run Through:
         %%
         link_package = link_block(); 
+        link_package{1} = link_package{1}/4;
+        link_package{2} = link_package{2}/4;
+        link_package{3} = link_package{3}/4;
+        link_package{4} = link_package{4}/4;
+        
         %%
         tia_outputs = tia_block(link_package);
         %%
+        verbose = 1;
         adc_outputs = adc_block(tia_outputs);
         %%
         final_signal = adc_outputs{1};
@@ -62,6 +111,7 @@ verbose = 0;
 %otherwise.
         verbose = 0;
         calib_power = 0.00001; %0.1mW;
+        
         v_max_calib = 4.5;
         n = 100;
         R_sweep = logspace(0,8,n);
@@ -99,6 +149,7 @@ verbose = 0;
         R_calib = R_sweep(ind);
         [val, ind] = min(abs(v_ref/safety_factor-v_sum));
         R_no_calib = R_sweep(ind);
+        R_max_dr = 100E3;
         
         verbose = 1;
         if(verbose)
@@ -114,7 +165,9 @@ verbose = 0;
             loglog(R_sweep, v_ref.*ones(1,n)./safety_factor,'-.');
             loglog(R_calib.*ones(1,n), logspace(-8,5,n));
             loglog(R_no_calib.*ones(1,n), logspace(-8,5,n));
+            loglog(R_max_dr.*ones(1,n), logspace(-8,5,n),'*');
 
+            
             title(['Rf Sensitivity Study, CalibPower: ', num2str(calib_power*1000), 'mW']);
             legend('Calibration', 'BG+Sig Voltage','Best Signal',...
                 'Best Noise','Calib Signal','Calib Noise',...

@@ -1,0 +1,8 @@
+Intervals: 10Hz -5kHz
+(Rf, Cf, Cd,  RMS)
+(1k ,  0.74pF,  35pF, 315.7nV)
+(1k ,  0.74pF,  50pF, 315.7nV) <-Cd doesn't effect noise unless Cf has to compensate.
+(10k,  0.74pF,  35pF, FAILED)
+(100k, 2pF,     35pF, 12.945uV)
+(200k, 2pF,     35pF, 24.982µV)
+(200k, 2pF,     35pF, 2uV) <-With ADA4530 (I think)

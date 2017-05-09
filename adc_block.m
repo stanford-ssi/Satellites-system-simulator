@@ -2,12 +2,13 @@ function adc_outputs = adc_block( signal_levels)
 %These are all static voltage levels
 %or Vrms of each input. 
 input_signal = signal_levels{1};
-input_noise = signal_levels{2};
+input_noise = signal_levels{4}; %{4}: Purely noise from TIA.
 background_irradiance = signal_levels{3};
 
 global verbose;
 global v_ref;
 global safety_factor;
+global snr_target;
 %safety_factor = 2; 
 %Multiplies the max signal by
 %this to set the max sampling range.
@@ -18,10 +19,37 @@ global safety_factor;
 %v_ref = 3.3;
 %adc_vals = ltc25000();
 adc_vals = mk66_avg32();
+adc_vals = ltc2500_df256();
 enob_adc = adc_vals{1};
 thd_adc = adc_vals{2};
 adc_name = adc_vals{3};
+adc_noise = adc_vals{4};
+adc_DF = adc_vals{5};
 
+%%
+%Calculation of TIA noise floor 
+%compared to ADC's noise floor
+    vpd = v_ref*2^(-enob_adc);
+    adc_floor = vpd/(adc_DF/2); %The divide by DF/2 is for downsample process gain.
+    needed_tia_floor = db2mag(10)*adc_floor; %TIA noise floor should be 10db higher than ADCS
+    %If tia noise is greater than above NTF; adc noise won't matter or
+    %contribute to the noise of the system.
+    
+    %Steps: FIND needed NOISE_FLOOR for TIA
+    %Iterate on Rf in LTSpice to find RF that  gives that. Use it
+    %Calculate System noise with that value
+    %double check that calib laser works.
+    %Check SNR value is above what we need.
+    
+
+%%
+%No PGA's, just take it straight:
+    vpd = v_ref*2^(-enob_adc);
+    enob_pure = log2(input_signal/vpd);
+    needed_gain = needed_signal/input_signal;
+    SINAD = 6.02.*enob_pure + 1.76;
+    snr_pure = -10*log10(10.^(-SINAD./10) - 10.^(thd_adc/10)) +mag2db(adc_DF/2);
+    
 %%Input signal simulation assuming PGA maximizing dynamic range.
 %
     total_inp_voltage = input_signal + background_irradiance + input_noise;

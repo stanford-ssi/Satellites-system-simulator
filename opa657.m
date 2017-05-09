@@ -1,6 +1,7 @@
 function specs = opa657(w)
     %Opamp is OPA657
     %http://www.ti.com/lit/ds/symlink/opa657.pdf
+    OPAMP_GBP = 1.6E9;
     OPAMP_3DB_OPENLOOP = 1E9; %1Ghz
     OPAMP_DC_GAIN = 75; %Db
     OPAMP_OPENLOOPGAIN = openloop_gain(OPAMP_3DB_OPENLOOP, OPAMP_DC_GAIN,w); 
@@ -12,7 +13,7 @@ function specs = opa657(w)
     OPAMP_INOISE_POLE = 1E6; %1Mhz
     OPAMP_INOISE_SLOPE = 1; %in log10,log10.
     OPAMP_INOISE = opamp_inoise(OPAMP_INOISE_DC, OPAMP_INOISE_POLE, OPAMP_INOISE_SLOPE, w);
-    specs = {OPAMP_3DB_OPENLOOP; OPAMP_DC_GAIN; OPAMP_VNOISE; OPAMP_INOISE; OPAMP_OPENLOOPGAIN};
+    specs = {OPAMP_3DB_OPENLOOP; OPAMP_DC_GAIN; OPAMP_VNOISE; OPAMP_INOISE; OPAMP_OPENLOOPGAIN; OPAMP_GBP};
 
     global verbose;
     if(verbose ==1)
