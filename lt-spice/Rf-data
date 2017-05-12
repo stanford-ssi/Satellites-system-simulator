@@ -5,4 +5,11 @@ Intervals: 10Hz -5kHz
 (10k,  0.74pF,  35pF, FAILED)
 (100k, 2pF,     35pF, 12.945uV)
 (200k, 2pF,     35pF, 24.982µV)
-(200k, 2pF,     35pF, 2uV) <-With ADA4530 (I think)
+
+(6.28k,2pF,     35pF, 643nV, ADA4530)
+(20k,  2pF,     35pF, 821nV, ADA4530)
+(100k, 2pF,     35pF, 1.48uV, ADA4530)
+(200k, 2pF,     35pF, 2uV, ADA4530)
+(400k, 2pF,     35pF, 2.7967µV ADA4530)
+(500k, 2pF,     35pF, 3.1uV, ADA4530)
+(5Meg ,2pF,     35pF, 6.5uV, ADA4530)

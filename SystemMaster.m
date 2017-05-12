@@ -30,45 +30,10 @@ global Cf; %updated Automatically in TIA block.
 LT_SPICE = 0;
 safety_factor = 2;
 v_ref = 5;
-Rf = 100E3;
+Rf = 500E3;
 verbose = 0;
 
-%%
-%========================================================
-    %PGA mode vs pure ADC Testground
-    link_package = link_block(); 
-    link_package{1} = link_package{1}/4;
-    link_package{2} = link_package{2}/4;
-    link_package{3} = link_package{3}/4;
-    link_package{4} = link_package{4}/4;
-    total_optical = (link_package{1}+link_package{2}+link_package{3});
-    q = 1.60217662E-19; %TODO, HOW to actually do shot noise. This is an educated guess.
-    ns = ( 2*q*(PHOTODIODE_DARK_CURRENT + ((total_optical)*responsivity))*bandwidth)^0.5 *Rf ;
-       
-    %% 
-    %Pure ADC
-    noise_tia = 12.945E-6;
-    noise_shot = ns;
-    noise_adc = 
-    signal = link_package{1}*Rf*0.72;
-    noise = sqrt(noise_tia^2+noise_shot^2+noise_adc^2);
-    max_v = total_optical*Rf*0.72+dark_cur*Rf;
-    snr_pure = mag2db(signal/noise);
-    %%
-    %With PGA and filters and Teensy
-    pga_gain = 300;
-    noise_tia = pga_gain * 12.945E-6;
-    noise_shot = pga_gain * ns;
-    noise_adc = 
-    noise_filter = pga_gain
-    noise_pga1 = 
-    
-    
-    signal = link_package{1}*Rf*0.72;
-    noise = sqrt(noise_tia^2+noise_shot^2+noise_adc^2);
-    max_v = (link_package{1}+link_package{2}+link_package{3})*Rf*0.72+dark_cur*Rf;
-    
-
+ 
 
 
 %%
@@ -81,7 +46,9 @@ verbose = 0;
         link_package{4} = link_package{4}/4;
         
         %%
+        Rf = 6.28E3;
         tia_outputs = tia_block(link_package);
+        Cf
         %%
         verbose = 1;
         adc_outputs = adc_block(tia_outputs);
@@ -110,7 +77,7 @@ verbose = 0;
 %Results: Yes; but calib laser must be looow power. Tricky
 %otherwise.
         verbose = 0;
-        calib_power = 0.00001; %0.1mW;
+        calib_power = 1E-6; %0.1mW;
         
         v_max_calib = 4.5;
         n = 100;
@@ -149,7 +116,7 @@ verbose = 0;
         R_calib = R_sweep(ind);
         [val, ind] = min(abs(v_ref/safety_factor-v_sum));
         R_no_calib = R_sweep(ind);
-        R_max_dr = 100E3;
+        R_max_dr = 5E6;
         
         verbose = 1;
         if(verbose)
