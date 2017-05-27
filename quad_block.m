@@ -352,10 +352,11 @@ function angle_uncertainty = quad_block(sig_power, noise_power)
     %SNR = get_snr(tia_sig, tia_noise, df);
     %mag2db(SNR) %Sanity check component. from Theory of tracking accuracy of
     %laser systems. eq 62
-    spot_size = w*2; %0.001; %.2mm
+    w = 0.00025
+    spot_size = w; %0.001; %.2mm
     var_x = SNR.^-1.*(1-8./SNR)./(1+8./SNR).^2;
     dx = spot_size.^2*var_x; %denormalized variance. eq 3b
-    fc = 0.015; %focal distance assuming simple telescope (it's not)
+    fc = 0.01; %focal distance assuming simple telescope (it's not)
     var_theta_II = asin(dx/fc);
 
     display =1;

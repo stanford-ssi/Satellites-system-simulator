@@ -263,13 +263,18 @@ filtered_tia_noise = 432E-9;
     
     SNR = db2mag(snr_dsp);   
     
-   
-    laser_spot_diameter = 0.25E-3;
-    f = 10E-3; 
+    
     quad_sensitivity_xy_2 = 4./SNR;
     quad_sensitivity_xy = sqrt(quad_sensitivity_xy_2);
-    spot_sensitivity_xy = (laser_spot_diameter/2)*quad_sensitivity_xy;    
+
+    laser_spot_diameter = 0.00025;
+    spot_sensitivity = zeros(length(laser_spot_diameter),length(laser_spot_power));
+    spot_sensitivity_xy = (laser_spot_diameter/2)*quad_sensitivity_xy;
+    
     spot_sensitivity_rad = spot_sensitivity_xy./f;
+   
+    figure
+    semilogy(mag2db(SNR),spot_sensitivity_rad);
     
     %SNR = get_snr(tia_sig, tia_noise, df);
     %mag2db(SNR) %Sanity check component. from Theory of tracking accuracy of
@@ -277,12 +282,11 @@ filtered_tia_noise = 432E-9;
     w = 0.00025
     spot_size = w/2; %0.001; %.2mm
     var_x = SNR.^-1.*(1-8./SNR)./(1+8./SNR).^2;
-    var_x = 4./SNR;
     dx = sqrt(spot_size.^2*var_x); %denormalized variance. eq 3b
     fc = 0.01; %focal distance assuming simple telescope (it's not)
     std_theta_II = asin(dx/fc);
     figure
-    semilogy(10*log10(SNR),std_theta_II);
+    semilogy(mag2db(SNR),std_theta_II);
 
     target_theta = 1E-6;
     tg = ones(1,length(SNR))*target_theta;

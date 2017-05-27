@@ -26,9 +26,11 @@ global LT_SPICE; %Whether to use LT-spice sims for TIA. (You probably should)
 global Rf;
 global v_ref;
 global safety_factor;
+global snr_target;
 global Cf; %updated Automatically in TIA block.
 LT_SPICE = 0;
 safety_factor = 2;
+snr_target = 30;
 v_ref = 5;
 Rf = 500E3;
 verbose = 0;
@@ -39,7 +41,12 @@ verbose = 0;
 %%
 %Test Run Through:
         %%
+        verbose = 1;
+        scenario = 0;
         link_package = link_block(); 
+        scenario = 2;
+        link_package = link_block(); 
+        
         link_package{1} = link_package{1}/4;
         link_package{2} = link_package{2}/4;
         link_package{3} = link_package{3}/4;
@@ -77,7 +84,7 @@ verbose = 0;
 %Results: Yes; but calib laser must be looow power. Tricky
 %otherwise.
         verbose = 0;
-        calib_power = 1E-6; %0.1mW;
+        calib_power = 1E-5; %0.1mW;
         
         v_max_calib = 4.5;
         n = 100;
@@ -132,7 +139,7 @@ verbose = 0;
             loglog(R_sweep, v_ref.*ones(1,n)./safety_factor,'-.');
             loglog(R_calib.*ones(1,n), logspace(-8,5,n));
             loglog(R_no_calib.*ones(1,n), logspace(-8,5,n));
-            loglog(R_max_dr.*ones(1,n), logspace(-8,5,n),'*');
+            %loglog(R_max_dr.*ones(1,n), logspace(-8,5,n),'*');
 
             
             title(['Rf Sensitivity Study, CalibPower: ', num2str(calib_power*1000), 'mW']);
@@ -140,7 +147,7 @@ verbose = 0;
                 'Best Noise','Calib Signal','Calib Noise',...
                 'Max Vcalib 4.5v','Max Allowable AC signal');
             xlabel('Rf');
-            ylabel('V peak'); %But also Vrms?
+            ylabel('Vrms'); %But also Vrms?
             
 %             figure
 %             loglog(R_sweep, v_calib);

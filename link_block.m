@@ -108,7 +108,7 @@ function output_package= link_block()
         %Best case, it's 1E-2
         %worst case, it's 0.3 of the range.
     end
-    atmo_signal = Prx.*db2mag(attenuation); %signal after atmosphere
+    atmo_signal = Prx*10^(attenuation/10); %signal after atmosphere
     %atmospheric atetenuation.
     %Based on here: https://en.wikipedia.org/wiki/White_noise
     %Power_i for all spectrum i  = variance;
@@ -142,7 +142,7 @@ function output_package= link_block()
     
     %%
     %Putting it all together
-    total_signal = atmo_signal;
+    total_signal = atmo_signal*10^(-3/10);
     total_noise = atmo_noise;
     total_bg = Pbg; 
     
@@ -174,6 +174,7 @@ function output_package= link_block()
     end
     
     output_package = {total_signal , total_noise, total_bg, r_spot};
+    10*log10(2*0.86/A_spot*A_rx)
 end
 
 

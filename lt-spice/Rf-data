@@ -5,6 +5,11 @@ Intervals: 10Hz -5kHz
 (10k,  0.74pF,  35pF, FAILED)
 (100k, 2pF,     35pF, 12.945uV)
 (200k, 2pF,     35pF, 24.982µV)
+(500k, 2pF,     35pF, 14.9mV)
+(500k, 2pF,     375pF, 22.4uV) Luna photodiode
+(500k, 2pF,     375pF, 3.9uV) 937-1063Hz Luna photodiode
+(5Meg, 2pF,     27pF,  14.9mV) full bw, Luna photodiode. Reverse biased.
+
 
 (6.28k,2pF,     35pF, 643nV, ADA4530)
 (20k,  2pF,     35pF, 821nV, ADA4530)
@@ -13,3 +18,5 @@ Intervals: 10Hz -5kHz
 (400k, 2pF,     35pF, 2.7967µV ADA4530)
 (500k, 2pF,     35pF, 3.1uV, ADA4530)
 (5Meg ,2pF,     35pF, 6.5uV, ADA4530)
+(500k, 2pF,     375pF, 2.14uV, ADA4530) Luna photodiode
+(500k, 2pF,     375pF, 432nV, ADA4530) 937-1063Hz, Luna photodiode

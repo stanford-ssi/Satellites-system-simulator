@@ -1,12 +1,12 @@
-* D:\Dropbox\Sats-systems-simulator\lt-spice\Tia-rf-study-GBP-ada4530.asc
-C2 v2 0 35pF
+* D:\Dropbox\Sats-systems-simulator\lt-spice\Tia-rf-study-500k-ada4530.asc
+C2 v2 0 375pF
 V2 N001 0 5
-R8 Vout v2 {Rx}
-I2 v2 0 AC 1nA
-C1 Vout v2 1pF
-R2 v2 0 50000k
+R8 Vout v2 500k
+I2 v2 0 AC 22E-9
+C1 Vout v2 2pF
+R2 v2 0 100Meg
 XU3 0 v2 N001 0 Vout NC_01 NC_02 ADA4530
-.ac dec 50 10 5k
+;ac dec 100 100 1Meg
 .inc D:\Dropbox\QuadFrontEnd\spice-models\ada4096.cir
 .lib opamp.sub
 .measure ns INTEG V(n003)
@@ -16,8 +16,7 @@ XU3 0 v2 N001 0 Vout NC_01 NC_02 ADA4530
 * Integrated Signal Power; 34.7 dB
 .inc D:\Dropbox\QuadFrontEnd\spice-models\ad8607.cir
 .inc D:\Dropbox\QuadFrontEnd\spice-models\ada4530.cir
-;noise V(Vout) v2 dec 100 10 5k
-.step param Rx  list 1k 10k 100k 1Meg 5Meg
+.noise V(Vout) v2 dec 100 937 1063
 .lib D:\Dropbox\QuadFrontEnd\spice-models\ADA4530.cir
 .backanno
 .end

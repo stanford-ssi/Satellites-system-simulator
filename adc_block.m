@@ -9,6 +9,7 @@ global verbose;
 global v_ref;
 global safety_factor;
 global snr_target;
+needed_signal = snr_target;
 %safety_factor = 2; 
 %Multiplies the max signal by
 %this to set the max sampling range.
