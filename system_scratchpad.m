@@ -34,7 +34,7 @@ safety_factor = 2;
 v_ref = 5;
 verbose = 0;
 
-
+%%
 
 
 opamp = 'ADA4530';
@@ -45,17 +45,13 @@ opamp = 'ADA4530';
 Rf = 20E3;
 noise_tia = 821E-9;
 
-
-
 opamp = 'OPA657';
 Rf = 400E3; %
 noise_tia = 4*12.5E-6;
 
-
 opamp = 'ADA4530';
 Rf = 200E3;
 noise_tia = 2E-6;
-
 
 opamp = 'ADA4530';
 Rf = 100E3; %
@@ -130,10 +126,11 @@ filtered_tia_noise = 432E-9;
     
     
     df = 64; 
+    
     noise_shot = ns;
     noise_adc = vpd/(12^0.5)/df; % %LTC2500-df256 spec'd this for 4ksps.
     
-    signal = link_package{1}*Rf*responsivity;
+    signal = link_package{1}*Rf*responsivity
     noise = sqrt(noise_tia^2+noise_shot^2+noise_adc^2);
     max_v = total_optical*Rf*responsivity+dark_curr*Rf;
     snr_pure = mag2db(signal/noise)
@@ -152,6 +149,9 @@ filtered_tia_noise = 432E-9;
     ylabel('Vrms Voltage Noise');
     xlabel('Scalars');
 
+%%
+
+    
     %and again, but with DSP cutoff. 
     signal = link_package{1}*Rf*responsivity;
     noise_tia = filtered_tia_noise; %Vrms for the 937-1064 bw.
@@ -198,6 +198,8 @@ filtered_tia_noise = 432E-9;
     SNR = snr_dsp;   
     
     
+   
+    std_theta_II = noise_to_angle(signal,noise_adc,spot_diam,focal_dist);
     
     figure
     semilogy(10*log10(SNR),std_theta_II);

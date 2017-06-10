@@ -43,7 +43,7 @@ function output_package= tia_block(sigs);
     
     %% System Parameters:
     opspecs = opa657(w);
-    photspecs = s5981();
+    photspecs = MT03();
     global Rf %1k CHANGE VALUE HERE
     global Cf;
     Cf = 1E-12; %1pF CHANGE VALUE HERE
@@ -63,10 +63,15 @@ function output_package= tia_block(sigs);
     OPAMP_INOISE = opspecs{4};
     OPAMP_OPENLOOPGAIN = opspecs{5};
     OPAMP_GBP = opspecs{6};
+    
+    
     PHOTODIODE_RESPONSIVITY = photspecs{1};
     PHOTODIODE_CAPACITANCE = photspecs{2};
     PHOTODIODE_RESISTANCE = photspecs{3};
     PHOTODIODE_DARK_CURRENT = photspecs{4};
+    
+    
+    
     
     Cf = sqrt(PHOTODIODE_CAPACITANCE/(2*pi*OPAMP_3DB_OPENLOOP*Rf)); %http://www.ti.com/lit/an/snoa942/snoa942.pdf
     R2 = Rf; %Feedback resistance

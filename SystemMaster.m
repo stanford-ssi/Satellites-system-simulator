@@ -53,7 +53,7 @@ verbose = 0;
         link_package{4} = link_package{4}/4;
         
         %%
-        Rf = 6.28E3;
+        Rf = 500E3;
         tia_outputs = tia_block(link_package);
         Cf
         %%
