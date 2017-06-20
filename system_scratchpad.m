@@ -97,7 +97,7 @@ filtered_tia_noise = 3.9E-6;
 
 opamp = 'ADA4530';
 Rf = 500E3; %
-noise_tia = 3.1E-6;
+noise_tia = 1.48E-6;
 filtered_tia_noise = 432E-9; 
 
 %========================================================

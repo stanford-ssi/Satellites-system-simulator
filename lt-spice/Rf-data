@@ -20,3 +20,4 @@ Intervals: 10Hz -5kHz
 (5Meg ,2pF,     35pF, 6.5uV, ADA4530)
 (500k, 2pF,     375pF, 2.14uV, ADA4530) Luna photodiode
 (500k, 2pF,     375pF, 432nV, ADA4530) 937-1063Hz, Luna photodiode
+(500k, 2pF,     375pF, 1.4828µV, ADA4530) 10Hz-1.28kHz (BW of LTC2500 SINC2 filter)
