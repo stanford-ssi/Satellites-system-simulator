@@ -76,7 +76,7 @@ fft_floor(i) = mag2db(adc_floor(i))-fft_gain;
 snr_adc(i) = mag2db(v_signal)-fft_floor(i);
 
 ADC_name = 'LTC2344';
-i =6;
+i =3;
 v_ref = 2.048;
 adc_snr = 83.3;
 dBF = -1;
@@ -87,7 +87,7 @@ snr_adc(i) = mag2db(v_signal)-fft_floor(i);
 
 
 ADC_name = 'LTC2500';
-i=3
+i=4
 v_ref = 5;
 adc_snr = 104;
 dBF = -1;
@@ -95,6 +95,17 @@ adc_max_sig = db2mag((mag2db(v_ref)-dBF)); %Typically reference adc signals are 
 adc_floor(i) = adc_max_sig/db2mag(adc_snr);
 fft_floor(i) = mag2db(adc_floor(i))-fft_gain;
 snr_adc(i) = mag2db(v_signal)-fft_floor(i);
+
+ADC_name = 'ADA131A02';
+i = 5;
+v_ref = 2.442;
+adc_snr = 115;
+dBF = -20;
+adc_max_sig = db2mag((mag2db(v_ref)-dBF)); %Typically reference adc signals are applied at 1dB (1dBF) below the max voltage to avoid the worst of the distortion.
+adc_floor(i) = adc_max_sig/db2mag(adc_snr);
+fft_floor(i) = mag2db(adc_floor(i))-fft_gain;
+snr_adc(i) = mag2db(v_signal)-fft_floor(i);
+
 
 
 adc_floor
